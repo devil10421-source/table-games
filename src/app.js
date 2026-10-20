@@ -1,7 +1,7 @@
 /* 桌邊 · 手機介面（大廳 + 阿瓦隆） */
 (function () {
   'use strict';
-  const Core = window.Core, AV = window.Avalon, esc = Core.esc;
+  const Core = window.Core, AV = window.Avalon, OW = window.Onuw, esc = Core.esc;
   const qs = new URLSearchParams(location.search);
   const LOCAL = qs.get('local') === '1';
   const FBCFG = (window.TABLE_CONFIG && window.TABLE_CONFIG.firebase && window.TABLE_CONFIG.firebase.databaseURL) ? window.TABLE_CONFIG.firebase : null;
@@ -14,7 +14,7 @@
 
   const GAMES = [
     { id: 'avalon', n: '阿瓦隆', d: '5–10 人 · 推理與辯論', ready: true },
-    { id: 'werewolf', n: '一夜終極狼人', d: '3–10 人 · 一晚決勝負', ready: false },
+    { id: 'onuw', n: '一夜終極狼人', d: '3–10 人 · 一晚決勝負', ready: true },
     { id: 'undercover', n: '誰是臥底', d: '4–12 人 · 描述詞語找臥底', ready: false }
   ];
 
@@ -147,7 +147,7 @@
     document.body.classList.toggle('has-tabs', !!inGame);
     tabsEl.hidden = !inGame;
     if (inGame) {
-      tabsEl.innerHTML = '<div class="tabs-in" role="tablist">' + [['game', '遊戲'], ['me', '我的身分'], ['log', '紀錄']].map(function (t) {
+      tabsEl.innerHTML = '<div class="tabs-in" role="tablist">' + [['game', '遊戲'], ['me', '我的身分'], ['log', S.room.gameId === 'onuw' ? '說明' : '紀錄']].map(function (t) {
         return '<button role="tab" aria-selected="' + (S.tab === t[0]) + '" data-act="tab" data-v="' + t[0] + '">' + t[1] + '</button>';
       }).join('') + '</div>';
     } else tabsEl.innerHTML = '';
@@ -209,7 +209,8 @@
 
   function lobbyView() {
     const room = S.room, n = room.players.length, host = isHost();
-    const cfg = cfgNow(); const chk = AV.check(cfg, n);
+    const gid = room.gameId || 'avalon', isOw = gid === 'onuw';
+    const cfg = isOw ? cfgOw() : cfgNow(); const chk = (isOw ? OW : AV).check(cfg, n);
     const list = '<ul class="plist">' + room.players.map(function (p, i) {
       const mine = p.id === me();
       let ctl = '';
@@ -223,13 +224,14 @@
     }).join('') + '</ul>';
     let h = '<div class="card"><div class="row"><h2>等人加入</h2><span class="muted">' + n + ' / 10 人</span></div>' + list +
       (S.sim && host ? '<div class="btnrow"><button class="btn slim" data-act="addbot"' + (n >= 10 ? ' disabled' : '') + '>＋ 加一位</button></div>' : '') +
-      '<p class="muted small">座位順序就是任務隊長輪流的順序，' + (host ? '可以用 ▲▼ 調成大家實際的圍坐順序。' : '房主可以調整。') + '</p>' +
+      '<p class="muted small">' + (isOw ? '座位順序只影響畫面排列，' : '座位順序就是任務隊長輪流的順序，') + (host ? '可以用 ▲▼ 調成大家實際的圍坐順序。' : '房主可以調整。') + '</p>' +
       (!S.sim ? '<button class="btn" data-act="copy">複製邀請（房號 ' + esc(S.code) + '）</button>' : '') + '</div>';
 
     h += '<div class="card"><h3>選擇遊戲</h3><div class="opts">' + GAMES.map(function (gm) {
-      return '<button class="opt" aria-pressed="' + (gm.id === 'avalon') + '"' + (gm.ready && host ? '' : ' disabled') + ' data-act="game" data-k="' + gm.id + '"><span class="box">' + (gm.id === 'avalon' ? '✓' : '') + '</span><span><span class="ot">' + gm.n + (gm.ready ? '' : '（製作中）') + '</span><br><span class="od">' + gm.d + '</span></span></button>';
+      return '<button class="opt" aria-pressed="' + (gm.id === gid) + '"' + (gm.ready && host ? '' : ' disabled') + ' data-act="game" data-k="' + gm.id + '"><span class="box">' + (gm.id === gid ? '✓' : '') + '</span><span><span class="ot">' + gm.n + (gm.ready ? '' : '（製作中）') + '</span><br><span class="od">' + gm.d + '</span></span></button>';
     }).join('') + '</div></div>';
 
+    if (isOw) { h += owCfgCard(cfg, chk, host); } else {
     /* 角色設定 */
     const sl = chk.slots;
     const slotChip = function (label, o) { return '<span class="chip ' + (o.used > o.max ? 'evil' : '') + '">' + label + ' ' + o.used + '/' + o.max + '</span>'; };
@@ -252,7 +254,7 @@
     chk.errors.forEach(function (e) { c += '<div class="card warn small">⚠ ' + esc(e) + '</div>'; });
     chk.warnings.forEach(function (e) { c += '<p class="muted small">提醒：' + esc(e) + '</p>'; });
     c += '</div>';
-    h += c;
+    h += c; }
 
     if (host) h += '<button class="btn primary" data-act="start"' + (chk.ok ? '' : ' disabled') + '>開始遊戲（' + n + ' 人）</button>';
     else h += '<div class="card"><p class="muted" style="text-align:center">等房主開始遊戲…</p></div>';
@@ -264,6 +266,7 @@
   function gameView() {
     const s = g();
     if (!s) return '';
+    if (S.room.gameId === 'onuw') return owView(s);
     if (S.tab === 'me') return meTab(s);
     if (S.tab === 'log') return logTab(s);
     return gameTab(s);
@@ -533,6 +536,156 @@
     return h;
   }
 
+
+  /* ---------- 一夜終極狼人 ---------- */
+  function cfgOw() {
+    const c = Object.assign(OW.defaultCfg(), Core.clone(S.room.cfg.onuw || {}));
+    c.roles = c.roles || {}; return c;
+  }
+  function setCfgOw(mut) { const c = Core.clone(cfgOw()); mut(c); send('cfg', { gameId: 'onuw', cfg: c }); }
+  function owPreset(c, v, n) {
+    c.roles = { werewolf: 2 };
+    const steps = ['seer', 'robber', 'troublemaker'];
+    if (v !== 'new') steps.push('drunk', 'insomniac');
+    if (v === 'full') steps.push('minion', 'hunter', 'tanner', 'mason');
+    steps.forEach(function (k) {
+      c.roles[k] = k === 'mason' ? 2 : 1;
+      if (!OW.check(c, n).ok) delete c.roles[k];
+    });
+  }
+  function owCfgCard(cfg, chk, host) {
+    const rc = cfg.roles, sl = chk.slots;
+    let c = '<div class="card"><div class="row"><h3>一夜狼人角色</h3><span class="chip ' + (sl.used > sl.max ? 'evil' : '') + '">角色牌 ' + sl.used + '/' + sl.max + '</span></div>';
+    if (host) {
+      c += '<div class="seg" role="group" aria-label="預設組合"><button data-act="owpreset" data-v="new">新手局</button><button data-act="owpreset" data-v="std">標準局</button><button data-act="owpreset" data-v="full">完整局</button></div>' +
+        '<p class="muted small">新手局：狼人、預言家、強盜、搗蛋鬼。標準局再加酒鬼、失眠者。完整局再加爪牙、獵人、皮革匠、守夜人（牌數夠才加）。其餘補村民。</p>';
+      c += '<h3>狼人張數</h3><div class="seg" role="group">' + [0, 1, 2, 3].map(function (v) { return '<button data-act="owwolf" data-v="' + v + '" aria-pressed="' + ((rc.werewolf || 0) === v) + '">' + v + '</button>'; }).join('') + '</div>';
+      c += '<h3>其他角色</h3><div class="opts">' + OW.OPTIONAL.map(function (k) {
+        return optBtn('owtog', k, OW.R[k].n + (k === 'mason' ? '（2 張）' : ''), OW.R[k].d, !!rc[k]);
+      }).join('') + '</div>';
+      c += '<h3>白天討論時間</h3><div class="seg" role="group">' + OW.MINUTES.map(function (m) { return '<button data-act="owmin" data-v="' + m + '" aria-pressed="' + (cfg.minutes === m) + '">' + m + ' 分鐘</button>'; }).join('') + '</div>';
+    } else c += '<p class="muted small">由房主設定。</p>';
+    if (chk.ok) {
+      const inplay = OW.rolesInPlay(chk.roles).map(function (r) { return OW.R[r.key].n + (r.count > 1 ? '×' + r.count : ''); }).join('、');
+      c += '<div class="note"><b>本局的牌（玩家 + 3 張中間牌）：</b>' + esc(inplay) + '</div>';
+    }
+    chk.errors.forEach(function (e) { c += '<div class="card warn small">⚠ ' + esc(e) + '</div>'; });
+    chk.warnings.forEach(function (e) { c += '<p class="muted small">提醒：' + esc(e) + '</p>'; });
+    return c + '</div>';
+  }
+  function owRn(k) { return '<b>' + OW.R[k].n + '</b>'; }
+  function owNote(n) {
+    switch (n.type) {
+      case 'loneWolf': return '你是唯一的狼人，夜晚可以偷看一張中間牌。';
+      case 'noWolf': return '沒有玩家是狼人（狼人牌在中間）。';
+      case 'peek': return '你偷看了中間第 ' + (n.idx + 1) + ' 張牌：' + owRn(n.role) + '。';
+      case 'seerP': return '你看了 ' + tx(n.target) + ' 的牌：' + owRn(n.role) + '。';
+      case 'seerC': return '你看了中間第 ' + (n.idx[0] + 1) + '、' + (n.idx[1] + 1) + ' 張牌：' + owRn(n.roles[0]) + '、' + owRn(n.roles[1]) + '。';
+      case 'robber': return '你和 ' + tx(n.target) + ' 交換了牌，你現在的牌是：' + owRn(n.role) + '（' + OW.TEAM_NAME[OW.R[n.role].team] + '）。';
+      case 'robberNone': return '你沒有交換任何人。';
+      case 'tm': return '你交換了 ' + tx(n.a) + ' 和 ' + tx(n.b) + ' 的牌。';
+      case 'tmNone': return '你沒有交換任何人。';
+      case 'drunk': return '你和中間第 ' + (n.idx + 1) + ' 張牌交換了（沒有看）。你現在不確定自己是什麼。';
+      case 'insomniac': return '你現在的牌是：' + owRn(n.role) + '（' + OW.TEAM_NAME[OW.R[n.role].team] + '）。';
+      default: return '';
+    }
+  }
+  function teamCls(t) { return t === 'werewolf' ? 'evil' : t === 'village' ? 'good' : 'warn'; }
+  function owMeCard(s) {
+    const id = me(), inf = OW.info(s, id), R = OW.R[inf.role];
+    let open = '<div class="rname ' + (inf.team === 'tanner' ? '' : teamCls(inf.team)) + '">' + R.n + '</div><div><span class="chip ' + teamCls(inf.team) + '">' + OW.TEAM_NAME[inf.team] + '</span></div><p>' + esc(R.d) + '</p>';
+    inf.groups.forEach(function (gr) {
+      open += '<div class="glist"><div class="gt">' + esc(gr.title) + '</div>' + (gr.ids.length ? '<div class="wrap">' + gr.ids.map(function (x) { return '<span class="chip">' + nm(x) + '</span>'; }).join('') + '</div>' : '<div class="note">（沒有）</div>') + '</div>';
+    });
+    if (inf.notes.length) open += '<div class="notes">' + inf.notes.map(function (n) { return '<div class="note">' + owNote(n) + '</div>'; }).join('') + '</div>';
+    if (s.phase !== 'night' && inf.role !== 'insomniac' && s.res[id] && s.res[id].length === 0 && !inf.groups.length && !inf.notes.length) open += '<div class="note">你的角色夜晚沒有資訊。</div>';
+    return '<div class="reveal" data-hold="1" tabindex="0" role="button" aria-label="按住查看身分與夜晚資訊"><div class="shut"><div class="hint">按住查看身分與夜晚資訊</div><div class="muted small">放開就會蓋住</div></div><div class="open">' + open + '</div></div>';
+  }
+  function centerGrid(isOn) {
+    return '<div class="pgrid">' + [0, 1, 2].map(function (i) {
+      return '<button class="pl' + (isOn(i) ? ' sel' : '') + '" data-act="pickc" data-i="' + i + '" aria-pressed="' + (!!isOn(i)) + '"><span class="pn">中間第 ' + (i + 1) + ' 張</span></button>';
+    }).join('') + '</div>';
+  }
+  function owPick(id, s, st) {
+    if (s.phase === 'night') {
+      const kind = OW.nightKind(s, me());
+      if (kind === 'tm') toggleLim(st.targets, id, 2); else st.target = id;
+    } else st.target = id;
+  }
+  function owOthers(s) { return s.order.filter(function (x) { return x !== me(); }); }
+  function owNightPanel(s) {
+    const id = me(), kind = OW.nightKind(s, id), st = sel();
+    if (id in s.acts) return '<div class="banner">你已完成。等其他人（' + Object.keys(s.acts).length + ' / ' + s.n + '）</div>';
+    const ok = function (txt, dis, act) { return '<button class="btn primary" data-act="' + act + '"' + (dis ? ' disabled' : '') + '>' + txt + '</button>'; };
+    let h = '<div class="card accent">';
+    switch (kind) {
+      case 'none': h += '<h2>夜晚</h2><p class="muted">看完上面的資訊後按確認。每個人都要按，這樣別人看不出誰有行動。</p>' + ok('我知道了', false, 'n_ok'); break;
+      case 'peek': h += '<h2>你是唯一的狼人</h2><p class="muted small">可以偷看一張中間牌，也可以不看。</p>' + centerGrid(function (i) { return st.target === i; }) +
+        '<div class="btnrow">' + ok('偷看', st.target == null, 'n_peek') + '<button class="btn" data-act="n_ok">不看</button></div>'; break;
+      case 'seer': {
+        if (!st.mode) st.mode = 'p';
+        h += '<h2>預言家</h2><div class="seg" role="group"><button data-act="owmode" data-v="p" aria-pressed="' + (st.mode === 'p') + '">看一位玩家</button><button data-act="owmode" data-v="c" aria-pressed="' + (st.mode === 'c') + '">看兩張中間牌</button></div>';
+        if (st.mode === 'p') h += pgrid(owOthers(s), function (x) { return st.target === x; }) + ok('查看', !st.target, 'n_seer');
+        else h += '<p class="muted small">已選 ' + st.targets.length + ' / 2</p>' + centerGrid(function (i) { return st.targets.indexOf(i) >= 0; }) + ok('查看', st.targets.length !== 2, 'n_seer');
+        break;
+      }
+      case 'robber': h += '<h2>強盜</h2><p class="muted small">選一位玩家交換牌（你會看到新牌），也可以不交換。</p>' + pgrid(owOthers(s), function (x) { return st.target === x; }) +
+        '<div class="btnrow">' + ok('交換', !st.target, 'n_rob') + '<button class="btn" data-act="n_ok">不交換</button></div>'; break;
+      case 'tm': h += '<h2>搗蛋鬼</h2><p class="muted small">選兩位其他玩家，交換他們的牌（不能看）。也可以不交換。已選 ' + st.targets.length + ' / 2</p>' + pgrid(owOthers(s), function (x) { return st.targets.indexOf(x) >= 0; }) +
+        '<div class="btnrow">' + ok('交換', st.targets.length !== 2, 'n_tm') + '<button class="btn" data-act="n_ok">不交換</button></div>'; break;
+      case 'drunk': h += '<h2>酒鬼</h2><p class="muted small">必須和一張中間牌交換，而且不能看新牌。</p>' + centerGrid(function (i) { return st.target === i; }) + ok('交換', st.target == null, 'n_drunk'); break;
+      default: break;
+    }
+    return h + '</div>';
+  }
+  function owRolesInPlay(s) {
+    const all = Object.keys(s.roles).map(function (i) { return s.roles[i]; }).concat(s.center);
+    return OW.rolesInPlay(all);
+  }
+  function owView(s) {
+    if (S.tab === 'me') return '<div class="stack"><h2>我的身分</h2>' + owMeCard(s) + '</div>';
+    if (S.tab === 'log') {
+      return '<div class="stack"><h2>說明</h2><div class="card"><h3>本局的牌</h3><div class="hist">' + owRolesInPlay(s).map(function (r) {
+        return '<div class="hrow"><b>' + OW.R[r.key].n + (r.count > 1 ? ' ×' + r.count : '') + '</b><br>' + esc(OW.R[r.key].d) + '</div>';
+      }).join('') + '</div></div><div class="card"><h3>流程</h3><div class="hist"><div class="hrow">夜晚：每人用手機完成行動，結算順序固定（狼人→爪牙→守夜人→預言家→強盜→搗蛋鬼→酒鬼→失眠者）。</div><div class="hrow">白天：自由討論，過半數人按「開始投票」或時間到就投票。</div><div class="hrow">投票：得票最多的人死亡，平票全死；沒有人超過 1 票就沒人死。</div></div></div><button class="link" data-act="leave">離開這個房間</button></div>';
+    }
+    const st = sel(); const id = me();
+    let h = '';
+    if (s.phase === 'night') {
+      h += '<div class="card"><div class="row"><h2>夜晚</h2><span class="muted small">' + Object.keys(s.acts).length + ' / ' + s.n + ' 完成</span></div><p class="muted small">所有人閉上眼睛，各自在手機上完成行動。</p></div>' + owMeCard(s) + owNightPanel(s);
+    } else if (s.phase === 'day') {
+      const need = Math.floor(s.n / 2) + 1;
+      h += '<div class="card"><div class="row"><h2>白天討論</h2><span class="cd" style="font-size:22px">' + cd(s.t0 + s.cfg.minutes * 60000) + '</span></div><p class="muted small">自由討論。想提早投票的人按下按鈕，達到 ' + need + ' 人或時間到就開始投票。</p>' +
+        '<button class="btn primary" data-act="owcall"' + (s.calls.indexOf(id) >= 0 ? ' disabled' : '') + '>' + (s.calls.indexOf(id) >= 0 ? '已提議投票' : '我想開始投票') + '（' + s.calls.length + ' / ' + need + '）</button></div>' + owMeCard(s) +
+        '<div class="card"><h3>本局的牌</h3><p class="small">' + esc(owRolesInPlay(s).map(function (r) { return OW.R[r.key].n + (r.count > 1 ? '×' + r.count : ''); }).join('、')) + '（另有 3 張在中間）</p></div>';
+    } else if (s.phase === 'vote') {
+      const voted = id in s.votes;
+      h += '<div class="card accent"><h2>投票</h2><p class="muted small">選一個你想處決的人。同時投票，得票最多的人死亡。</p>';
+      if (!voted) h += pgrid(owOthers(s), function (x) { return st.target === x; }) + '<button class="btn primary" data-act="owvote"' + (st.target ? '' : ' disabled') + '>投給他</button>';
+      else h += '<div class="banner">你已投票。等其他人（' + Object.keys(s.votes).length + ' / ' + s.n + '）</div>';
+      const wait = s.order.filter(function (x) { return !(x in s.votes); });
+      if (wait.length) h += '<p class="muted small">還沒投：' + names(wait) + '</p>';
+      h += '</div>' + owMeCard(s);
+    } else if (s.phase === 'over') h += owOver(s);
+    return h;
+  }
+  function owOver(s) {
+    const o = s.over, id = me();
+    const win = OW.won(s, id);
+    const wl = o.winners.map(function (t) { return OW.TEAM_NAME[t]; });
+    let h = '<div class="banner ' + (win ? 'good' : 'evil') + '" role="status"><div style="font-size:24px">' + (win ? '你贏了' : '你輸了') + '</div><div>' + (wl.length ? '獲勝：' + wl.join('、') : '沒有人獲勝') + '</div></div>';
+    h += '<div class="card"><h3>處決結果</h3><p>' + (o.dead.length ? '死亡：' + names(o.dead) : '沒有人死亡（沒有人得到超過 1 票）') + '</p>' +
+      (o.shots.length ? '<p>獵人帶走：' + o.shots.map(function (x) { return tx(x.by) + ' → ' + tx(x.target); }).join('、') + '</p>' : '') +
+      (o.noWolf ? '<p class="muted small">這局沒有玩家是狼人。</p>' : '') + '</div>';
+    h += '<div class="card"><h3>所有人的牌</h3><ul class="plist">' + s.order.map(function (x, i) {
+      const a = s.roles[x], b = s.final[x];
+      return '<li class="' + (x === id ? 'me' : '') + '"><span class="no">' + (i + 1) + '</span><span class="nm">' + nm(x) + '<br><span class="muted tiny">投給 ' + nm(s.votes[x]) + ' · 得 ' + o.tally[x] + ' 票' + (o.dead.indexOf(x) >= 0 ? ' · 死亡' : '') + '</span></span>' +
+        '<span>' + (a === b ? '<b>' + OW.R[b].n + '</b>' : OW.R[a].n + ' → <b>' + OW.R[b].n + '</b>') + '</span><span class="chip ' + (OW.won(s, x) ? 'good' : '') + '">' + (OW.won(s, x) ? '勝' : '敗') + '</span></li>';
+    }).join('') + '</ul><p class="small muted">中間三張牌：' + s.center.map(function (c, i) { return s.finalCenter[i] === c ? OW.R[c].n : OW.R[c].n + ' → ' + OW.R[s.finalCenter[i]].n; }).join('、') + '</p></div>';
+    h += '<button class="btn primary" data-act="again">再玩一局（回到大廳）</button>';
+    return h;
+  }
+
   /* ---------- 倒數與逾時 ---------- */
   function tickCountdowns() {
     const now = S.tp ? S.tp.now() : Date.now();
@@ -544,7 +697,7 @@
   function tickTimeout() {
     tickCountdowns();
     const room = S.room; if (!S.tp || !room.created || room.phase !== 'game' || !room.game) return;
-    const s = room.game; const dl = AV.deadline(s); if (!dl) return;
+    const s = room.game; const dl = Core.games[room.gameId].deadline(s); if (!dl) return;
     const now = S.tp.now();
     const key = s.ph;
     if (S.jitter[key] == null) S.jitter[key] = (isHost() ? 0 : 1500) + Math.random() * (isHost() ? 500 : 2500);
@@ -581,7 +734,7 @@
         const extra = ['小華', '阿強', '小玉', '老王', '阿美', '小新'];
         S.tp.push({ k: 'join', p: 'p' + (n + 1), d: { name: extra[n % extra.length] + (n > 7 ? n : '') } }); return;
       }
-      case 'game': return;
+      case 'game': if (isHost() && Core.games[ds.k] && Core.games[ds.k].ready) send('cfg', { gameId: ds.k }); return;
       case 'preset': setCfg(function (c) { applyPreset(c, ds.v, S.room.players.length); }); return;
       case 'tog': setCfg(function (c) { c.opt[ds.k] = !c.opt[ds.k]; if (!c.opt[ds.k]) delete c.opt[ds.k]; }); return;
       case 'togcfg': setCfg(function (c) { c[ds.k] = !c[ds.k]; }); return;
@@ -589,6 +742,7 @@
       case 'again': send('reset', {}); return;
       case 'pickp': {
         if (!s) return;
+        if (S.room.gameId === 'onuw') { owPick(ds.id, s, st); render(); return; }
         if (s.phase === 'team') {
           toggleLim(st.team, ds.id, AV.teamSize(s));
           if (st.excal && st.team.indexOf(st.excal) < 0) st.excal = null;
@@ -598,6 +752,23 @@
         } else st.target = ds.id;
         render(); return;
       }
+      case 'owpreset': setCfgOw(function (c) { owPreset(c, ds.v, S.room.players.length); }); return;
+      case 'owtog': setCfgOw(function (c) { if (c.roles[ds.k]) delete c.roles[ds.k]; else c.roles[ds.k] = ds.k === 'mason' ? 2 : 1; }); return;
+      case 'owwolf': setCfgOw(function (c) { if (+ds.v) c.roles.werewolf = +ds.v; else delete c.roles.werewolf; }); return;
+      case 'owmin': setCfgOw(function (c) { c.minutes = +ds.v; }); return;
+      case 'pickc': {
+        if (OW.nightKind(s, me()) === 'seer') toggleLim(st.targets, +ds.i, 2); else st.target = +ds.i;
+        render(); return;
+      }
+      case 'owmode': st.mode = ds.v; st.target = null; st.targets = []; render(); return;
+      case 'n_ok': play('ow.night', { act: {} }); return;
+      case 'n_peek': play('ow.night', { act: { peek: st.target } }); return;
+      case 'n_seer': play('ow.night', { act: st.mode === 'c' ? { mode: 'c', idx: st.targets.slice().sort() } : { mode: 'p', target: st.target } }); return;
+      case 'n_rob': play('ow.night', { act: { target: st.target } }); return;
+      case 'n_tm': play('ow.night', { act: { a: st.targets[0], b: st.targets[1] } }); return;
+      case 'n_drunk': play('ow.night', { act: { idx: st.target } }); return;
+      case 'owcall': play('ow.call', {}); return;
+      case 'owvote': play('ow.vote', { target: st.target }); return;
       case 'excalto': st.excal = ds.id; render(); return;
       case 'propose': {
         const d = { team: st.team.slice() }; if (s.cfg.excal) d.excal = st.excal;

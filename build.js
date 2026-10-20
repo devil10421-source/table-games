@@ -1,13 +1,13 @@
 'use strict';
 const fs = require('fs'), path = require('path');
 const R = function (f) { return fs.readFileSync(path.join(__dirname, 'src', f), 'utf8'); };
-const css = R('style.css'), core = R('core.js'), av = R('avalon.js'), app = R('app.js');
+const css = R('style.css'), core = R('core.js'), av = R('avalon.js'), ow = R('onuw.js'), app = R('app.js');
 const dist = path.join(__dirname, 'dist');
 fs.mkdirSync(dist, { recursive: true });
 const safe = function (js) { return js.replace(/<\/script/gi, '<\\/script'); };
 
 const body = '<div id="root"></div>\n<nav id="tabs" class="tabs" hidden aria-label="分頁"></nav>\n';
-const scripts = '<script>' + safe(core) + '</script>\n<script>' + safe(av) + '</script>\n<script>' + safe(app) + '</script>\n';
+const scripts = '<script>' + safe(core) + '</script>\n<script>' + safe(av) + '</script>\n<script>' + safe(ow) + '</script>\n<script>' + safe(app) + '</script>\n';
 
 /* 正式版：完整網頁 + 另一個 config.js 放伺服器設定 */
 const full = '<!doctype html>\n<html lang="zh-Hant">\n<head>\n<meta charset="utf-8">\n' +

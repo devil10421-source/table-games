@@ -4,13 +4,13 @@
 
 ## 目前進度
 - 阿瓦隆：完成（含梅林、派西維爾、莫甘娜、蘭斯洛特、巫婆、湖中仙女、神劍等擴充角色）
-- 一夜終極狼人：製作中
+- 一夜終極狼人：完成（不含化身幽靈）
 - 誰是臥底：舊的單機版，尚未搬進新架構
 - 連線：Firebase Realtime Database 的部分尚未實測
 
 ## 結構
 - `src/core.js` 房間與連線層（事件記錄＋重播，伺服器不需懂規則）
-- `src/avalon.js` 阿瓦隆規則引擎
+- `src/avalon.js` 阿瓦隆規則引擎、`src/onuw.js` 一夜終極狼人規則引擎
 - `src/app.js`、`src/style.css` 手機介面
 - `build.js` 產生 `dist/`（`index.html`、`config.js`、`artifact.html`）
 - `test/` 規則測試（`node test/fuzz.js`、`node test/scenarios.js`）與瀏覽器測試
