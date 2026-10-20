@@ -23,4 +23,9 @@ if (!fs.existsSync(path.join(dist, 'config.js'))) fs.writeFileSync(path.join(dis
 /* Claude 作品版：標題在最前面、沒有 doctype/html/head/body，只能示範 */
 const art = '<title>桌邊</title>\n<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n<style>\n' + css + '</style>\n' + body + scripts;
 fs.writeFileSync(path.join(dist, 'artifact.html'), art);
+/* GitHub Pages 從 docs/ 資料夾提供網頁 */
+const docs = path.join(__dirname, 'docs'); fs.mkdirSync(docs, { recursive: true });
+fs.copyFileSync(path.join(dist, 'index.html'), path.join(docs, 'index.html'));
+fs.copyFileSync(path.join(dist, 'config.js'), path.join(docs, 'config.js'));
+fs.writeFileSync(path.join(docs, '.nojekyll'), '');
 console.log('built', fs.statSync(path.join(dist, 'index.html')).size, fs.statSync(path.join(dist, 'artifact.html')).size);
