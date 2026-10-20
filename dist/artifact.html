@@ -1,0 +1,1617 @@
+<title>桌邊</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>
+/* 版面：單欄手機優先。一個畫面只做一件事；祕密資訊要按住才顯示。 */
+:root{
+  --bg:#EDEFF4; --surface:#FFFFFF; --surface-2:#E1E5EE; --fg:#13161F; --muted:#586074;
+  --line:#CBD1DE; --accent:#3446D6; --accent-fg:#FFFFFF;
+  --good:#1B7F57; --good-bg:#DDF1E8; --evil:#BF3A2B; --evil-bg:#F8E1DD; --warn:#8A5A00; --warn-bg:#FBEFD2;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1016; --surface:#171A23; --surface-2:#222636; --fg:#ECEEF5; --muted:#9BA2B6;
+    --line:#2C3142; --accent:#8C9AFF; --accent-fg:#0E1016;
+    --good:#4FD39A; --good-bg:#12302A; --evil:#FF7B6B; --evil-bg:#3A1D1A; --warn:#F2C26B; --warn-bg:#352A12;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1016; --surface:#171A23; --surface-2:#222636; --fg:#ECEEF5; --muted:#9BA2B6;
+  --line:#2C3142; --accent:#8C9AFF; --accent-fg:#0E1016;
+  --good:#4FD39A; --good-bg:#12302A; --evil:#FF7B6B; --evil-bg:#3A1D1A; --warn:#F2C26B; --warn-bg:#352A12;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg); color:var(--fg);
+  font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  font-size:16px; line-height:1.5;
+  padding-block:14px 28px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  -webkit-tap-highlight-color:transparent;
+}
+body.has-tabs{padding-block-end:92px}
+#root{max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:16px;min-width:0}
+h1{font-size:40px;font-weight:900;letter-spacing:.02em;line-height:1.1;margin:0}
+h2{font-size:22px;font-weight:700;margin:0;text-wrap:balance}
+h3{font-size:13px;font-weight:700;letter-spacing:.08em;color:var(--muted);margin:0}
+p{margin:0}
+.muted{color:var(--muted)}
+.small{font-size:14px}
+.tiny{font-size:12.5px}
+.stack{display:flex;flex-direction:column;gap:12px;min-width:0}
+.tight{gap:6px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}
+.wrap{display:flex;flex-wrap:wrap;gap:6px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.card.accent{border-color:var(--accent);border-width:1.5px}
+.card.good{border-color:var(--good);background:var(--good-bg)}
+.card.evil{border-color:var(--evil);background:var(--evil-bg)}
+.card.warn{border-color:var(--warn);background:var(--warn-bg);color:var(--fg)}
+.btn{
+  appearance:none;border:0;font:inherit;font-size:17px;font-weight:700;
+  min-height:54px;padding:12px 18px;border-radius:14px;width:100%;
+  background:var(--surface-2);color:var(--fg);cursor:pointer;
+}
+.btn.primary{background:var(--accent);color:var(--accent-fg)}
+.btn.ghost{background:transparent;border:1.5px solid var(--line)}
+.btn.yes{background:var(--good);color:var(--bg)}
+.btn.no{background:var(--evil);color:var(--bg)}
+.btn.slim{min-height:44px;font-size:15px}
+.btn:disabled,.opt:disabled,.pl:disabled{opacity:.4;cursor:not-allowed}
+.link{appearance:none;border:0;background:none;font:inherit;font-size:15px;font-weight:500;color:var(--muted);padding:6px 0;cursor:pointer;align-self:flex-start}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.btnrow{display:flex;gap:10px}
+.btnrow .btn{min-width:0}
+input.txt{
+  width:100%;font:inherit;font-size:20px;font-weight:500;padding:14px;border-radius:14px;
+  border:1.5px solid var(--line);background:var(--surface);color:var(--fg);
+}
+input.code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:32px;font-weight:700;letter-spacing:.2em;text-align:center;text-transform:uppercase}
+.err{color:var(--evil);font-weight:700;font-size:14px}
+
+/* 頂列 */
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0}
+.codechip{
+  appearance:none;border:1.5px dashed var(--line);background:var(--surface);color:var(--fg);border-radius:12px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:18px;font-weight:700;letter-spacing:.14em;padding:6px 12px;cursor:pointer
+}
+.conn{font-size:13px;color:var(--muted)}
+.conn.off{color:var(--evil);font-weight:700}
+select.sel{font:inherit;font-size:15px;padding:8px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--fg);max-width:48%}
+
+/* 玩家與標籤 */
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--surface-2);color:var(--fg);white-space:nowrap}
+.chip.good{background:var(--good-bg);color:var(--good)}
+.chip.evil{background:var(--evil-bg);color:var(--evil)}
+.chip.acc{background:var(--accent);color:var(--accent-fg)}
+.chip.warn{background:var(--warn-bg);color:var(--warn)}
+.plist{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.plist li{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:var(--surface-2);min-width:0}
+.plist .no{font-variant-numeric:tabular-nums;font-weight:700;color:var(--muted);min-width:1.4em;text-align:center}
+.plist .nm{flex:1;min-width:0;overflow-wrap:anywhere;font-weight:500}
+.plist li.me{outline:2px solid var(--accent);outline-offset:-2px}
+.mini{appearance:none;border:0;background:var(--surface);color:var(--fg);border-radius:8px;font:inherit;font-size:15px;min-width:34px;min-height:34px;cursor:pointer}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+.pl{
+  appearance:none;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;font:inherit;
+  border:1.5px solid var(--line);background:var(--surface);color:var(--fg);border-radius:14px;padding:10px 12px;min-height:58px;cursor:pointer;min-width:0
+}
+.pl .pn{font-weight:700;overflow-wrap:anywhere;width:100%}
+.pl .ps{font-size:12.5px;color:var(--muted)}
+.pl.sel{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.pl.sel .ps{color:var(--accent-fg);opacity:.85}
+.pl.me{border-width:2.5px}
+
+/* 任務軌跡 */
+.track{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.qc{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.qt{
+  width:100%;max-width:60px;aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:900;border:2px solid var(--line);background:var(--surface);color:var(--muted);font-variant-numeric:tabular-nums
+}
+.qt.cur{border-color:var(--accent);color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+.qt.ok{background:var(--good);border-color:var(--good);color:var(--bg);font-size:18px}
+.qt.bad{background:var(--evil);border-color:var(--evil);color:var(--bg);font-size:18px}
+.qt.hid{background:var(--warn-bg);border-color:var(--warn);color:var(--warn)}
+.qc .qs{font-size:11.5px;color:var(--muted);text-align:center;line-height:1.2}
+.pips{display:flex;gap:6px}
+.pip{width:14px;height:14px;border-radius:50%;border:2px solid var(--line);background:transparent}
+.pip.on{background:var(--evil);border-color:var(--evil)}
+
+/* 設定選項 */
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{
+  appearance:none;display:flex;align-items:flex-start;gap:12px;text-align:left;font:inherit;color:var(--fg);
+  border:1.5px solid var(--line);background:var(--surface);border-radius:14px;padding:10px 12px;cursor:pointer;width:100%;min-width:0
+}
+.opt .box{flex:0 0 auto;width:24px;height:24px;border-radius:8px;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;margin-top:2px}
+.opt[aria-pressed="true"]{border-color:var(--accent)}
+.opt[aria-pressed="true"] .box{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.opt .ot{font-weight:700}
+.opt .od{font-size:13px;color:var(--muted)}
+.seg{display:flex;gap:8px}
+.seg button{appearance:none;flex:1;border:1.5px solid var(--line);background:transparent;color:var(--fg);font:inherit;font-weight:700;min-height:44px;border-radius:12px;cursor:pointer;min-width:0}
+.seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.seg button:disabled{opacity:.4;cursor:not-allowed}
+.slots{display:flex;gap:8px;flex-wrap:wrap}
+
+/* 按住顯示 */
+.reveal{
+  min-height:240px;border-radius:24px;background:var(--surface);border:1.5px solid var(--line);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:22px;
+  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none;cursor:pointer
+}
+.reveal .hint{font-size:20px;font-weight:700;color:var(--accent)}
+.reveal .open{display:none;flex-direction:column;align-items:center;gap:10px;width:100%}
+.reveal .shut{display:flex;flex-direction:column;align-items:center;gap:8px}
+.reveal.on{border-color:var(--accent);justify-content:flex-start;text-align:left;align-items:stretch}
+.reveal.on .open{display:flex;align-items:stretch;text-align:left}
+.reveal.on .shut{display:none}
+.rname{font-size:38px;font-weight:900;line-height:1.15}
+.rname.good{color:var(--good)}
+.rname.evil{color:var(--evil)}
+.glist{display:flex;flex-direction:column;gap:6px}
+.glist .gt{font-size:13px;font-weight:700;color:var(--muted)}
+.notes{display:flex;flex-direction:column;gap:8px}
+.note{padding:10px 12px;border-radius:12px;background:var(--surface-2);font-size:15px}
+
+.banner{border-radius:14px;padding:14px 16px;font-weight:700;background:var(--surface-2)}
+.banner.good{background:var(--good);color:var(--bg)}
+.banner.evil{background:var(--evil);color:var(--bg)}
+.cd{font-variant-numeric:tabular-nums;font-weight:700}
+table.rt{width:100%;border-collapse:collapse;font-size:15px}
+table.rt td,table.rt th{padding:7px 4px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+table.rt th{font-size:12.5px;color:var(--muted);font-weight:700}
+.scroll-x{overflow-x:auto}
+.hist{display:flex;flex-direction:column;gap:6px;font-size:14.5px}
+.hist .hrow{padding:8px 10px;border-radius:10px;background:var(--surface-2)}
+
+.tabs{
+  position:fixed;left:0;right:0;bottom:0;z-index:5;
+  background:var(--surface);border-top:1px solid var(--line);
+  padding:8px max(16px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+}
+.tabs-in{display:flex;gap:8px;max-width:460px;margin:0 auto}
+.tabs button{appearance:none;flex:1;border:0;font:inherit;font-weight:700;font-size:16px;min-height:50px;border-radius:14px;background:transparent;color:var(--muted);cursor:pointer;min-width:0}
+.tabs button[aria-selected="true"]{background:var(--surface-2);color:var(--fg)}
+.toast{
+  position:fixed;left:50%;transform:translateX(-50%);bottom:calc(88px + env(safe-area-inset-bottom,0px));z-index:9;
+  background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:700;font-size:14px;max-width:90vw
+}
+@media (prefers-reduced-motion: no-preference){
+  .btn,.pl,.opt,.seg button{transition:background-color .12s,border-color .12s,transform .08s}
+  .btn:active,.pl:active{transform:scale(.98)}
+}
+</style>
+<div id="root"></div>
+<nav id="tabs" class="tabs" hidden aria-label="分頁"></nav>
+<script>/* 桌邊 · 共用核心
+ * 做法：所有人把「動作」寫進同一份事件記錄，每支手機用同一套規則把記錄重播一遍，
+ * 就會算出相同的遊戲狀態。所以伺服器只需要「存記錄、通知大家」，不需要懂遊戲規則。
+ */
+(function (g) {
+  'use strict';
+  const Core = {};
+  Core.games = {};
+
+  /* ---------- 小工具 ---------- */
+  Core.hash = function (s) {
+    s = String(s);
+    let h = 0x811c9dc5;
+    for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+    return h >>> 0;
+  };
+  Core.rng = function (seed) {
+    let a = Core.hash(seed);
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  };
+  Core.shuffle = function (arr, rnd) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(rnd() * (i + 1));
+      const t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  };
+  Core.clone = function (o) { return JSON.parse(JSON.stringify(o)); };
+  Core.esc = function (s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  };
+  const CODE_AL = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  function randInt(n) {
+    try {
+      const c = (typeof crypto !== 'undefined' && crypto.getRandomValues) ? crypto : null;
+      if (c) { const u = new Uint32Array(1); c.getRandomValues(u); return u[0] % n; }
+    } catch (e) { /* fallthrough */ }
+    return Math.floor(Math.random() * n);
+  }
+  Core.randomCode = function () { let s = ''; for (let i = 0; i < 5; i++) s += CODE_AL[randInt(32)]; return s; };
+  Core.randomId = function () { let s = ''; for (let i = 0; i < 8; i++) s += CODE_AL[randInt(32)].toLowerCase(); return s; };
+  Core.normCode = function (s) {
+    return String(s || '').toUpperCase().split('').filter(function (c) { return CODE_AL.indexOf(c) >= 0; }).join('').slice(0, 5);
+  };
+
+  /* ---------- 房間狀態機 ---------- */
+  const MAX_PLAYERS = 12;
+  Core.newRoom = function () {
+    return { created: false, seed: '', players: [], hostId: null, phase: 'lobby', gameId: 'avalon', cfg: {}, game: null, rev: 0 };
+  };
+  Core.nameOf = function (room, id) {
+    const p = room.players.find(function (x) { return x.id === id; });
+    return p ? p.name : '?';
+  };
+  Core.seatOf = function (room, id) { return room.players.findIndex(function (x) { return x.id === id; }) + 1; };
+  function cleanName(s, fallback) {
+    s = String(s == null ? '' : s).replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 10);
+    return s || fallback;
+  }
+  Core.cleanName = cleanName;
+
+  Core.reduceRoom = function (room0, a) {
+    if (!a || typeof a.k !== 'string') return room0;
+    const d = a.d || {};
+    const room = Core.clone(room0);
+    const isPlayer = room.players.some(function (x) { return x.id === a.p; });
+    const isHost = a.p === room.hostId;
+
+    if (a.k === 'create') {
+      if (room.created) return room0;
+      room.created = true;
+      room.seed = String(d.seed || 'seed');
+      room.hostId = a.p;
+      room.players = [{ id: a.p, name: cleanName(d.name, '玩家1') }];
+      return room;
+    }
+    if (!room.created) return room0;
+
+    if (a.k === 'join') {
+      if (isPlayer) {
+        const me = room.players.find(function (x) { return x.id === a.p; });
+        me.name = cleanName(d.name, me.name);
+        return room;
+      }
+      if (room.phase !== 'lobby' || room.players.length >= MAX_PLAYERS) return room0;
+      room.players.push({ id: a.p, name: cleanName(d.name, '玩家' + (room.players.length + 1)) });
+      return room;
+    }
+    if (!isPlayer) return room0;
+
+    switch (a.k) {
+      case 'leave': {
+        if (room.phase !== 'lobby') return room0;
+        room.players = room.players.filter(function (x) { return x.id !== a.p; });
+        if (room.hostId === a.p) room.hostId = room.players.length ? room.players[0].id : null;
+        return room;
+      }
+      case 'kick': {
+        if (room.phase !== 'lobby' || !isHost || d.id === a.p) return room0;
+        room.players = room.players.filter(function (x) { return x.id !== d.id; });
+        return room;
+      }
+      case 'move': {
+        if (room.phase !== 'lobby' || !isHost) return room0;
+        const i = room.players.findIndex(function (x) { return x.id === d.id; });
+        const j = i + (d.dir < 0 ? -1 : 1);
+        if (i < 0 || j < 0 || j >= room.players.length) return room0;
+        const t = room.players[i]; room.players[i] = room.players[j]; room.players[j] = t;
+        return room;
+      }
+      case 'cfg': {
+        if (room.phase !== 'lobby' || !isHost || !Core.games[d.gameId]) return room0;
+        room.gameId = d.gameId;
+        if (d.cfg) room.cfg[d.gameId] = d.cfg;
+        return room;
+      }
+      case 'start': {
+        if (room.phase !== 'lobby' || !isHost) return room0;
+        const G = Core.games[room.gameId];
+        if (!G || !G.ready) return room0;
+        const cfg = room.cfg[room.gameId] || G.defaultCfg();
+        const n = room.players.length;
+        const chk = G.check(cfg, n);
+        if (!chk.ok) return room0;
+        room.game = G.init({ ids: room.players.map(function (x) { return x.id; }), cfg: cfg, seed: room.seed + ':' + room.rev, t: a.t || 0 });
+        room.phase = 'game';
+        return room;
+      }
+      case 'reset': {
+        if (room.phase !== 'game') return room0;
+        const G = Core.games[room.gameId];
+        const over = room.game && room.game.over;
+        if (!isHost && !over) return room0;
+        void G;
+        room.phase = 'lobby'; room.game = null; room.rev += 1;
+        return room;
+      }
+      default: break;
+    }
+    if (room.phase === 'game' && room.game) {
+      const G = Core.games[room.gameId];
+      if (G && a.k.indexOf(G.prefix) === 0) {
+        room.game = G.reduce(room.game, a);
+        return room;
+      }
+    }
+    return room0;
+  };
+
+  /* 把排序好的記錄折疊成房間狀態；新增動作時只重播新增的部分 */
+  Core.Folder = function () {
+    let keys = [];
+    let room = Core.newRoom();
+    this.update = function (sorted) {
+      let same = keys.length <= sorted.length;
+      for (let i = 0; same && i < keys.length; i++) if (keys[i] !== sorted[i].key) same = false;
+      if (!same) { room = Core.newRoom(); keys = []; }
+      for (let i = keys.length; i < sorted.length; i++) {
+        try { room = Core.reduceRoom(room, sorted[i].a); }
+        catch (e) { if (typeof console !== 'undefined') console.error('skip bad action', sorted[i], e); }
+        keys.push(sorted[i].key);
+      }
+      return room;
+    };
+    this.room = function () { return room; };
+  };
+
+  /* ---------- 連線層 ---------- */
+  /* 共同介面：push(a) 寫入一筆動作；onChange(cb) 收到排序後的 [{key,a}]；now() 伺服器時間估計；close() */
+  function padKey(n) { return String(n).padStart(15, '0'); }
+
+  /* 本機示範：全部玩家都在同一個畫面，沒有網路 */
+  Core.openSim = function () {
+    const items = []; let cb = null; let counter = 0;
+    function fire() { if (cb) cb(items.slice()); }
+    return {
+      kind: 'sim',
+      push: function (a) {
+        const x = Object.assign({}, a, { t: Date.now() });
+        items.push({ key: padKey(++counter), a: x });
+        fire(); return Promise.resolve();
+      },
+      onChange: function (f) { cb = f; fire(); },
+      now: function () { return Date.now(); },
+      close: function () { cb = null; },
+      items: items
+    };
+  };
+
+  /* 同一個瀏覽器的多個分頁（測試用，網址加 ?local=1） */
+  Core.openLocal = function (code) {
+    const lsKey = 'table:log:' + code;
+    let cb = null;
+    let bc = null;
+    try { bc = new BroadcastChannel('table:' + code); } catch (e) { bc = null; }
+    function load() {
+      try { return JSON.parse(localStorage.getItem(lsKey) || '[]'); } catch (e) { return []; }
+    }
+    function fire() { if (cb) cb(load().sort(function (x, y) { return x.key < y.key ? -1 : x.key > y.key ? 1 : 0; })); }
+    if (bc) bc.onmessage = function () { fire(); };
+    window.addEventListener('storage', function (e) { if (e.key === lsKey) fire(); });
+    return {
+      kind: 'local',
+      push: function (a) {
+        const arr = load();
+        const key = padKey(Date.now()) + '-' + Core.randomId().slice(0, 4);
+        arr.push({ key: key, a: Object.assign({}, a, { t: Date.now() }) });
+        try { localStorage.setItem(lsKey, JSON.stringify(arr)); } catch (e) { /* ignore */ }
+        if (bc) bc.postMessage('x');
+        fire(); return Promise.resolve();
+      },
+      onChange: function (f) { cb = f; fire(); },
+      now: function () { return Date.now(); },
+      close: function () { cb = null; if (bc) bc.close(); }
+    };
+  };
+
+  /* Firebase Realtime Database（正式連線） */
+  const FB_VER = '10.14.1';
+  function loadScript(src) {
+    return new Promise(function (res, rej) {
+      const s = document.createElement('script');
+      s.src = src; s.onload = res; s.onerror = function () { rej(new Error('載入失敗：' + src)); };
+      document.head.appendChild(s);
+    });
+  }
+  Core.openFirebase = async function (code, cfg) {
+    if (!g.firebase) {
+      await loadScript('https://www.gstatic.com/firebasejs/' + FB_VER + '/firebase-app-compat.js');
+      await loadScript('https://www.gstatic.com/firebasejs/' + FB_VER + '/firebase-database-compat.js');
+    }
+    const fb = g.firebase;
+    if (!fb.apps.length) fb.initializeApp(cfg);
+    const db = fb.database();
+    const ref = db.ref('rooms/' + code + '/log');
+    const store = {};
+    let cb = null; let pending = false; let offset = 0; let connected = false;
+    db.ref('.info/serverTimeOffset').on('value', function (s) { offset = s.val() || 0; });
+    const connCbs = [];
+    db.ref('.info/connected').on('value', function (s) { connected = !!s.val(); connCbs.forEach(function (f) { f(connected); }); });
+    function fire() {
+      pending = false;
+      if (!cb) return;
+      cb(Object.keys(store).sort().map(function (k) { return { key: k, a: store[k] }; }));
+    }
+    function schedule() { if (!pending) { pending = true; setTimeout(fire, 0); } }
+    ref.on('child_added', function (s) { store[s.key] = s.val(); schedule(); });
+    ref.on('child_changed', function (s) { store[s.key] = s.val(); schedule(); });
+    return {
+      kind: 'firebase',
+      push: function (a) {
+        const x = Object.assign({}, a, { t: fb.database.ServerValue.TIMESTAMP });
+        return ref.push(x);
+      },
+      onChange: function (f) { cb = f; schedule(); },
+      onConnection: function (f) { connCbs.push(f); f(connected); },
+      now: function () { return Date.now() + offset; },
+      close: function () { ref.off(); }
+    };
+  };
+
+  g.Core = Core;
+  if (typeof module !== 'undefined' && module.exports) module.exports = Core;
+})(typeof globalThis !== 'undefined' ? globalThis : window);
+</script>
+<script>/* 桌邊 · 阿瓦隆規則引擎
+ * 純函式：reduce(狀態, 動作) -> 新狀態。所有手機用同一份記錄重播，結果一致。
+ * 角色與規則來源：avalon-game.com 的規則與各角色頁面。
+ */
+(function (g) {
+  'use strict';
+  const Core = g.Core;
+  const A = {};
+
+  /* ---------- 角色資料 ---------- */
+  const R = {
+    merlin:        { n: '梅林', side: 'good', d: '看得到所有壞人（莫德雷德除外），但不知道他們各是什麼角色。要躲過刺客。' },
+    merlin_pure:   { n: '終極梅林', side: 'good', d: '看得到壞人的具體角色（莫德雷德除外）。要躲過刺客。' },
+    servant:       { n: '亞瑟的忠臣', side: 'good', d: '沒有任何資訊。任務只能出成功。' },
+    percival:      { n: '派西維爾', side: 'good', d: '看得到兩位疑似梅林的人，一位是梅林，另一位是莫甘娜，分不出誰是誰。沒有莫甘娜時，只會看到梅林。' },
+    tristan:       { n: '特里斯坦', side: 'good', d: '認識伊索德。刺客要同時猜中兩人才算刺殺成功。' },
+    isolde:        { n: '伊索德', side: 'good', d: '認識特里斯坦。刺客要同時猜中兩人才算刺殺成功。' },
+    cleric:        { n: '牧師', side: 'good', d: '第 1 次任務結束後，得知第 1 次任務隊長的顯示陣營（自己當隊長就沒有資訊）。' },
+    troublemaker:  { n: '麻煩友', side: 'good', d: '好人，但被牧師、巫婆、湖中仙女查驗時會顯示為壞人。任務只能出成功。' },
+    guinevere:     { n: '女皇', side: 'good', d: '知道哪兩位是蘭斯洛特，但不知道他們現在的陣營。' },
+    lancelot_good: { n: '正義蘭斯洛特', side: 'good', d: '開局是好人。第 3、4、5 次任務前可能與邪惡蘭斯洛特交換陣營。目前是壞人時必須出失敗，是好人時必須出成功。' },
+    assassin:      { n: '刺客', side: 'evil', d: '好人拿下三次成功後，由你指認並刺殺，猜中就翻盤。' },
+    minion:        { n: '爪牙', side: 'evil', d: '壞人。認識其他壞人（奧伯倫除外）。' },
+    morgana:       { n: '莫甘娜', side: 'evil', d: '在派西維爾眼中，你和梅林一樣是疑似梅林。' },
+    mordred:       { n: '莫德雷德', side: 'evil', d: '梅林看不到你。' },
+    oberon:        { n: '奧伯倫', side: 'evil', d: '你不認識其他壞人，其他壞人也不認識你，但梅林看得到你。' },
+    trickster:     { n: '騙子', side: 'evil', d: '被牧師、巫婆、湖中仙女查驗時顯示為好人。梅林仍看得到你。' },
+    witch:         { n: '巫婆', side: 'evil', d: '每局一次，在任務結果翻出來前選擇隱藏它。之後系統隨機選一位玩家，他可以查驗一個人的陣營。' },
+    revealer:      { n: '被揭示者', side: 'evil', d: '公開的失敗任務累計兩次後，你的身分會向所有人公開，之後照常進行。' },
+    lunatic:       { n: '瘋子', side: 'evil', d: '你參加的每次任務都必須出失敗。' },
+    brute:         { n: '野蠻人', side: 'evil', d: '第 4、5 次任務只能出成功，前三次任務可以自選。' },
+    lancelot_evil: { n: '邪惡蘭斯洛特', side: 'evil', d: '開局是壞人，其他壞人認得你，但你不認識他們。陣營可能與正義蘭斯洛特交換。目前是壞人時必須出失敗，是好人時必須出成功。' }
+  };
+  const ORDER = ['merlin', 'merlin_pure', 'servant', 'percival', 'tristan', 'isolde', 'cleric', 'troublemaker', 'guinevere', 'lancelot_good',
+    'assassin', 'minion', 'morgana', 'mordred', 'oberon', 'trickster', 'witch', 'revealer', 'lunatic', 'brute', 'lancelot_evil'];
+  A.R = R; A.ORDER = ORDER;
+
+  const TEAM = [[2, 3, 2, 3, 3], [2, 3, 4, 3, 4], [2, 3, 3, 4, 4], [3, 4, 4, 5, 5], [3, 4, 4, 5, 5], [3, 4, 4, 5, 5]];
+  const EVIL_N = [2, 2, 3, 3, 3, 4];
+  const PRE_MS = 15000, WC_MS = 60000, LADY_MS = 120000;
+  A.PRE_MS = PRE_MS; A.WC_MS = WC_MS; A.LADY_MS = LADY_MS;
+
+  const OPT_GOOD = ['percival', 'lovers', 'cleric', 'troublemaker', 'guinevere', 'lancelots'];
+  const OPT_EVIL = ['morgana', 'mordred', 'oberon', 'trickster', 'witch', 'revealer', 'lunatic', 'brute'];
+  A.OPT_GOOD = OPT_GOOD; A.OPT_EVIL = OPT_EVIL;
+
+  A.defaultCfg = function () { return { pure: false, opt: {}, lady: false, excal: false }; };
+
+  /* ---------- 配置檢查與展開 ---------- */
+  A.check = function (cfg, n) {
+    cfg = cfg || A.defaultCfg();
+    const o = cfg.opt || {};
+    const errors = [], warnings = [];
+    if (n < 5 || n > 10) errors.push('人數需為 5 到 10 人（目前 ' + n + ' 人）');
+    const nn = Math.min(10, Math.max(5, n));
+    const E = EVIL_N[nn - 5], G = nn - E;
+    const good = [cfg.pure ? 'merlin_pure' : 'merlin'];
+    const evil = ['assassin'];
+    if (o.percival) good.push('percival');
+    if (o.lovers) good.push('tristan', 'isolde');
+    if (o.cleric) good.push('cleric');
+    if (o.troublemaker) good.push('troublemaker');
+    if (o.guinevere) good.push('guinevere');
+    if (o.lancelots) { good.push('lancelot_good'); evil.push('lancelot_evil'); }
+    OPT_EVIL.forEach(function (k) { if (o[k]) evil.push(k); });
+    if (o.guinevere && !o.lancelots) errors.push('女皇需要搭配蘭斯洛特');
+    if (good.length > G) errors.push('好人名額不足：已選 ' + good.length + ' 個特殊角色，' + nn + ' 人局只有 ' + G + ' 位好人');
+    if (evil.length > E) errors.push('壞人名額不足：已選 ' + evil.length + ' 個壞人角色（含刺客），' + nn + ' 人局只有 ' + E + ' 位壞人');
+    if ((o.trickster || o.troublemaker) && !(o.cleric || o.witch || cfg.lady)) {
+      warnings.push('騙子與麻煩友需要有人查驗才有作用（牧師、巫婆或湖中仙女）');
+    }
+    if (o.percival && !o.morgana) warnings.push('沒有莫甘娜時，派西維爾只會看到梅林');
+    let roles = null;
+    if (!errors.length) {
+      roles = good.slice();
+      while (roles.length < G) roles.push('servant');
+      evil.forEach(function (k) { roles.push(k); });
+      while (roles.length < nn) roles.push('minion');
+    }
+    return {
+      ok: !errors.length, errors: errors, warnings: warnings, roles: roles,
+      slots: { good: { used: good.length, max: G }, evil: { used: evil.length, max: E } }
+    };
+  };
+  A.expand = function (cfg, n) {
+    const c = A.check(cfg, n);
+    if (!c.ok) throw new Error('bad cfg: ' + c.errors.join(','));
+    return c.roles;
+  };
+  A.rolesInPlay = function (roles) {
+    const cnt = {};
+    roles.forEach(function (k) { cnt[k] = (cnt[k] || 0) + 1; });
+    return ORDER.filter(function (k) { return cnt[k]; }).map(function (k) { return { key: k, count: cnt[k] }; });
+  };
+
+  /* ---------- 基本查詢 ---------- */
+  A.teamSize = function (s) { return TEAM[s.n - 5][s.q]; };
+  A.teamSizeFor = function (n, q) { return TEAM[n - 5][q]; };
+  A.needFails = function (s) { return (s.n >= 7 && s.q === 3) ? 2 : 1; };
+  A.leaderId = function (s) { return s.order[s.leader]; };
+  A.align = function (s, id) {
+    const k = s.roles[id];
+    if (k === 'lancelot_good') return s.lflip ? 'evil' : 'good';
+    if (k === 'lancelot_evil') return s.lflip ? 'good' : 'evil';
+    return R[k].side;
+  };
+  /* 被牧師、巫婆、湖中仙女查驗時看到的陣營 */
+  A.shown = function (s, id) {
+    const k = s.roles[id];
+    if (k === 'trickster') return 'good';
+    if (k === 'troublemaker') return 'evil';
+    return A.align(s, id);
+  };
+  A.allowedCards = function (s, id) {
+    const k = s.roles[id];
+    if (A.align(s, id) === 'good') return ['S'];
+    if (k === 'lunatic') return ['F'];
+    if (k === 'lancelot_good' || k === 'lancelot_evil') return ['F'];
+    if (k === 'brute' && s.q >= 3) return ['S'];
+    return ['S', 'F'];
+  };
+  A.forcedWhy = function (s, id) {
+    const k = s.roles[id];
+    const al = A.align(s, id);
+    if (k === 'lancelot_good' || k === 'lancelot_evil') return al === 'good' ? '你現在是好人，只能出成功' : '你現在是壞人，只能出失敗';
+    if (al === 'good') return '好人只能出成功';
+    if (k === 'lunatic') return '瘋子的每次任務都必須出失敗';
+    if (k === 'brute' && s.q >= 3) return '野蠻人在第 4、5 次任務只能出成功';
+    return '';
+  };
+  A.clericCandidates = function (s) {
+    const present = {};
+    s.order.forEach(function (i) { present[s.roles[i]] = true; });
+    const goodKeys = ORDER.filter(function (k) { return R[k].side === 'good' && present[k]; });
+    let c = goodKeys.filter(function (k) { return k !== 'cleric' && k !== 'lancelot_good' && k !== 'merlin' && k !== 'merlin_pure' && k !== 'guinevere'; });
+    if (!c.length) c = goodKeys.filter(function (k) { return k === 'merlin' || k === 'merlin_pure' || k === 'guinevere'; });
+    return c;
+  };
+  A.killModes = function (s) {
+    const m = ['merlin'];
+    if (s.cfg.opt.lovers) m.push('lovers');
+    if (s.cfg.opt.guinevere) m.push('guinevere');
+    if (s.cfg.opt.cleric) m.push('cleric');
+    return m;
+  };
+  A.deadline = function (s) {
+    if (s.over) return null;
+    if (s.phase === 'pre') return { at: s.t0 + PRE_MS, k: 'av.timeout' };
+    if (s.phase === 'wcheck') return { at: s.t0 + WC_MS, k: 'av.timeout' };
+    if (s.phase === 'lady') return { at: s.t0 + LADY_MS, k: 'av.timeout' };
+    return null;
+  };
+  A.tally = function (s) {
+    return {
+      succ: s.hist.filter(function (e) { return e.real === 'S'; }).length,
+      fail: s.hist.filter(function (e) { return e.real === 'F'; }).length
+    };
+  };
+
+  /* ---------- 私人資訊 ---------- */
+  A.info = function (s, id) {
+    const k = s.roles[id];
+    const out = { role: k, side: R[k].side, align: A.align(s, id), groups: [], notes: [] };
+    const ids = s.order;
+    const initEvil = ids.filter(function (i) { return R[s.roles[i]].side === 'evil'; });
+    const curEvil = ids.filter(function (i) { return A.align(s, i) === 'evil'; });
+    const rnd = Core.rng(s.seed + ':info:' + id);
+    function holders(key) { return ids.filter(function (i) { return s.roles[i] === key; }); }
+
+    if (k === 'merlin') {
+      out.groups.push({ title: '壞人（莫德雷德不在其中）', ids: initEvil.filter(function (i) { return s.roles[i] !== 'mordred'; }) });
+    } else if (k === 'merlin_pure') {
+      out.groups.push({
+        title: '壞人與他們的角色（莫德雷德不在其中）',
+        items: curEvil.filter(function (i) { return s.roles[i] !== 'mordred'; }).map(function (i) {
+          const rk = s.roles[i];
+          return { id: i, label: (rk === 'lancelot_good' || rk === 'lancelot_evil') ? '蘭斯洛特（目前是壞人）' : R[rk].n };
+        })
+      });
+    } else if (k === 'percival') {
+      const c = holders('merlin').concat(holders('merlin_pure'), holders('morgana'));
+      out.groups.push({ title: c.length > 1 ? '兩位疑似梅林' : '梅林', ids: Core.shuffle(c, rnd) });
+    } else if (k === 'tristan' || k === 'isolde') {
+      out.groups.push({ title: k === 'tristan' ? '你的伴侶伊索德' : '你的伴侶特里斯坦', ids: holders(k === 'tristan' ? 'isolde' : 'tristan') });
+    } else if (k === 'guinevere') {
+      out.groups.push({ title: '兩位蘭斯洛特（不知道他們的陣營）', ids: Core.shuffle(holders('lancelot_good').concat(holders('lancelot_evil')), rnd) });
+    } else if (R[k].side === 'evil' && k !== 'oberon' && k !== 'lancelot_evil') {
+      out.groups.push({ title: '你的壞人隊友', ids: curEvil.filter(function (i) { return i !== id && s.roles[i] !== 'oberon'; }) });
+    } else if (k === 'lancelot_good') {
+      /* 沒有開局資訊 */
+    }
+
+    if (k === 'lancelot_good' || k === 'lancelot_evil') {
+      out.notes.push({ type: 'lanAlign', align: out.align, flipped: s.lflip });
+    }
+    if (k === 'cleric' && s.hist.length >= 1) {
+      const L = s.hist[0].leader;
+      out.notes.push(L === id ? { type: 'clericSelf' } : { type: 'cleric', target: L, shown: A.shown(s, L) });
+    }
+    if (s.lady) {
+      s.lady.checks.forEach(function (c) { if (c.by === id) out.notes.push({ type: 'lady', q: c.q, target: c.target, shown: A.shown(s, c.target) }); });
+    }
+    s.wcLog.forEach(function (c) {
+      if (c.checker === id) out.notes.push(c.target ? { type: 'wcheck', q: c.q, target: c.target, shown: A.shown(s, c.target) } : { type: 'wcheckNone', q: c.q });
+    });
+    s.hist.forEach(function (e) {
+      if (e.flip && (e.flip.by === id || e.flip.target === id)) {
+        out.notes.push({ type: 'excal', q: e.q, by: e.flip.by, target: e.flip.target, to: e.flip.to, mine: e.flip.by === id ? 'holder' : 'target' });
+      }
+    });
+    return out;
+  };
+
+  /* ---------- 初始化 ---------- */
+  function setPhase(s, name, t) { s.phase = name; s.ph += 1; s.t0 = t || 0; }
+
+  A.init = function (ctx) {
+    const ids = ctx.ids, n = ids.length, cfg = Core.clone(ctx.cfg || A.defaultCfg());
+    cfg.opt = cfg.opt || {};
+    const keys = Core.shuffle(A.expand(cfg, n), Core.rng(ctx.seed + ':deal'));
+    const roles = {};
+    ids.forEach(function (id, i) { roles[id] = keys[i]; });
+    const s = {
+      id: 'avalon', seed: ctx.seed, order: ids.slice(), n: n, cfg: cfg, roles: roles,
+      ph: 0, phase: 'team', t0: ctx.t || 0, q: 0,
+      leader: Math.floor(Core.rng(ctx.seed + ':leader')() * n), rejects: 0,
+      team: [], excal: null, votes: {}, cards: {}, lastVote: null,
+      hist: [], voteHist: [], feed: [],
+      lflip: false, deck: [], lanLog: [],
+      lady: null, witchId: null, witchUsed: false, pre: null, wc: null, wcLog: [],
+      revealed: null, over: null, assn: null
+    };
+    s.witchId = ids.find(function (i) { return roles[i] === 'witch'; }) || null;
+    if (cfg.opt.lancelots) s.deck = Core.shuffle(['S', 'S', 'B', 'B', 'B'], Core.rng(ctx.seed + ':deck'));
+    if (cfg.lady) {
+      const holder = s.order[(s.leader - 1 + n) % n];
+      s.lady = { holder: holder, held: [holder], checks: [] };
+    }
+    beginQuest(s, ctx.t || 0);
+    return s;
+  };
+
+  function beginQuest(s, t) {
+    s.team = []; s.excal = null; s.votes = {}; s.cards = {}; s.pre = null; s.wc = null;
+    if (s.q >= 2 && s.cfg.opt.lancelots) {
+      const c = s.deck[s.q - 2];
+      if (c === 'S') s.lflip = !s.lflip;
+      s.lanLog.push({ q: s.q, c: c });
+    }
+    if (s.q >= 2 && s.lady) setPhase(s, 'lady', t); else setPhase(s, 'team', t);
+  }
+
+  function endGame(s, winner, why, t, extra) {
+    s.over = Object.assign({ winner: winner, why: why }, extra || {});
+    setPhase(s, 'over', t);
+    return s;
+  }
+
+  function enterPre(s, t) {
+    const excalNeed = !!s.excal;
+    const witchNeed = !!(s.witchId && !s.witchUsed);
+    if (!excalNeed && !witchNeed) return finishQuest(s, t);
+    s.pre = { excalDone: !excalNeed, witchDone: !witchNeed, flip: null, hide: false };
+    setPhase(s, 'pre', t);
+    return s;
+  }
+  function checkPre(s, t) {
+    if (s.pre.excalDone && s.pre.witchDone) return finishQuest(s, t);
+    return s;
+  }
+
+  function finishQuest(s, t) {
+    const need = A.needFails(s);
+    const fails = s.team.filter(function (x) { return s.cards[x] === 'F'; }).length;
+    const real = fails >= need ? 'F' : 'S';
+    const hidden = !!(s.pre && s.pre.hide);
+    s.hist.push({
+      q: s.q, leader: s.order[s.leader], team: s.team.slice(), excal: s.excal,
+      flip: s.pre ? s.pre.flip : null, fails: fails, need: need, real: real, hidden: hidden, cards: Object.assign({}, s.cards)
+    });
+    if (hidden) {
+      const cand = s.order.filter(function (x) { return x !== s.witchId; });
+      const checker = cand[Math.floor(Core.rng(s.seed + ':wc:' + s.q)() * cand.length)];
+      s.wc = { checker: checker, q: s.q };
+      s.feed.push({ type: 'whide', q: s.q, checker: checker });
+      setPhase(s, 'wcheck', t);
+      return s;
+    }
+    return afterQuest(s, t);
+  }
+
+  function afterQuest(s, t) {
+    const tl = A.tally(s);
+    if (!s.revealed) {
+      const rv = s.order.find(function (x) { return s.roles[x] === 'revealer'; });
+      if (rv) {
+        const pub = s.hist.filter(function (e) { return !e.hidden && e.real === 'F'; }).length;
+        if (pub >= 2) { s.revealed = rv; s.feed.push({ type: 'reveal', id: rv }); }
+      }
+    }
+    if (tl.fail >= 3) return endGame(s, 'evil', '三次任務失敗', t);
+    if (tl.succ >= 3) { setPhase(s, 'assassin', t); return s; }
+    setPhase(s, 'qres', t);
+    return s;
+  }
+
+  /* ---------- 動作處理 ---------- */
+  A.reduce = function (s0, a) {
+    if (s0.over) return s0;
+    const d = a.d || {};
+    if (d.ph !== s0.ph) return s0;
+    const p = a.p, t = a.t || 0;
+    if (s0.order.indexOf(p) < 0) return s0;
+    const s = Core.clone(s0);
+    const leaderId = s.order[s.leader];
+
+    switch (a.k) {
+      case 'av.propose': {
+        if (s.phase !== 'team' || p !== leaderId) return s0;
+        const size = A.teamSize(s);
+        const team = Array.isArray(d.team) ? d.team : [];
+        if (team.length !== size || new Set(team).size !== size) return s0;
+        if (team.some(function (x) { return s.order.indexOf(x) < 0; })) return s0;
+        let ex = null;
+        if (s.cfg.excal) {
+          ex = d.excal;
+          if (!ex || team.indexOf(ex) < 0 || ex === p) return s0;
+        }
+        s.team = s.order.filter(function (x) { return team.indexOf(x) >= 0; });
+        s.excal = ex; s.votes = {};
+        setPhase(s, 'vote', t);
+        return s;
+      }
+      case 'av.vote': {
+        if (s.phase !== 'vote' || Object.prototype.hasOwnProperty.call(s.votes, p) || typeof d.v !== 'boolean') return s0;
+        s.votes[p] = d.v;
+        if (Object.keys(s.votes).length === s.n) {
+          const yes = s.order.filter(function (x) { return s.votes[x]; }).length;
+          const approve = yes * 2 > s.n;
+          s.voteHist.push({ q: s.q, leader: leaderId, team: s.team.slice(), excal: s.excal, votes: Object.assign({}, s.votes), approve: approve, rej: s.rejects });
+          s.lastVote = { approve: approve, yes: yes, no: s.n - yes };
+          setPhase(s, 'voteres', t);
+        }
+        return s;
+      }
+      case 'av.next': {
+        if (s.phase === 'voteres') {
+          if (s.lastVote.approve) {
+            s.rejects = 0; s.cards = {};
+            setPhase(s, 'quest', t);
+          } else {
+            s.rejects += 1;
+            if (s.rejects >= 5) return endGame(s, 'evil', '連續五次組隊被否決', t);
+            s.leader = (s.leader + 1) % s.n;
+            s.team = []; s.excal = null; s.votes = {};
+            setPhase(s, 'team', t);
+          }
+          return s;
+        }
+        if (s.phase === 'qres') {
+          s.q += 1;
+          s.leader = (s.leader + 1) % s.n;
+          beginQuest(s, t);
+          return s;
+        }
+        return s0;
+      }
+      case 'av.card': {
+        if (s.phase !== 'quest' || s.team.indexOf(p) < 0 || s.cards[p]) return s0;
+        if (A.allowedCards(s, p).indexOf(d.c) < 0) return s0;
+        s.cards[p] = d.c;
+        if (Object.keys(s.cards).length === s.team.length) return enterPre(s, t);
+        return s;
+      }
+      case 'av.excal': {
+        if (s.phase !== 'pre' || p !== s.excal || s.pre.excalDone) return s0;
+        const tg = d.target;
+        if (tg) {
+          if (s.team.indexOf(tg) < 0 || tg === p) return s0;
+          const from = s.cards[tg], to = from === 'S' ? 'F' : 'S';
+          s.cards[tg] = to;
+          s.pre.flip = { by: p, target: tg, from: from, to: to };
+          s.feed.push({ type: 'excal', q: s.q, by: p, target: tg });
+        } else {
+          s.feed.push({ type: 'excalPass', q: s.q, by: p });
+        }
+        s.pre.excalDone = true;
+        return checkPre(s, t);
+      }
+      case 'av.witch': {
+        if (s.phase !== 'pre' || p !== s.witchId || s.pre.witchDone) return s0;
+        if (d.hide) {
+          if (s.witchUsed) return s0;
+          s.witchUsed = true; s.pre.hide = true;
+        }
+        s.pre.witchDone = true;
+        return checkPre(s, t);
+      }
+      case 'av.wcheck': {
+        if (s.phase !== 'wcheck' || !s.wc || p !== s.wc.checker) return s0;
+        const tg = d.target || null;
+        if (tg && (s.order.indexOf(tg) < 0 || tg === p)) return s0;
+        s.wcLog.push({ q: s.q, checker: p, target: tg });
+        s.feed.push(tg ? { type: 'wcheck', q: s.q, by: p, target: tg } : { type: 'wcheckNone', q: s.q, by: p });
+        return afterQuest(s, t);
+      }
+      case 'av.lady': {
+        if (s.phase !== 'lady' || !s.lady || p !== s.lady.holder) return s0;
+        const tg = d.target;
+        if (!tg || tg === p || s.order.indexOf(tg) < 0 || s.lady.held.indexOf(tg) >= 0) return s0;
+        s.lady.checks.push({ q: s.q, by: p, target: tg });
+        s.lady.holder = tg; s.lady.held.push(tg);
+        s.feed.push({ type: 'lady', q: s.q, by: p, target: tg });
+        setPhase(s, 'team', t);
+        return s;
+      }
+      case 'av.timeout': {
+        const dl = A.deadline(s);
+        if (!dl || t < dl.at - 300) return s0;
+        if (s.phase === 'pre') {
+          s.pre.excalDone = true; s.pre.witchDone = true;
+          return checkPre(s, t);
+        }
+        if (s.phase === 'wcheck') {
+          s.wcLog.push({ q: s.q, checker: s.wc.checker, target: null });
+          s.feed.push({ type: 'wcheckNone', q: s.q, by: s.wc.checker });
+          return afterQuest(s, t);
+        }
+        if (s.phase === 'lady') {
+          s.feed.push({ type: 'ladySkip', q: s.q });
+          setPhase(s, 'team', t);
+          return s;
+        }
+        return s0;
+      }
+      case 'av.kill': {
+        if (s.phase !== 'assassin' || s.roles[p] !== 'assassin') return s0;
+        const m = d.mode, tg = Array.isArray(d.targets) ? d.targets : [];
+        if (A.killModes(s).indexOf(m) < 0) return s0;
+        if (tg.some(function (x) { return s.order.indexOf(x) < 0; })) return s0;
+        const extra = { kill: { mode: m, targets: tg } };
+        if (m === 'merlin') {
+          if (tg.length !== 1) return s0;
+          const ok = s.roles[tg[0]] === 'merlin' || s.roles[tg[0]] === 'merlin_pure';
+          return endGame(s, ok ? 'evil' : 'good', ok ? '刺客刺中了梅林' : '刺客沒有刺中梅林', t, extra);
+        }
+        if (m === 'lovers') {
+          if (tg.length !== 2 || tg[0] === tg[1]) return s0;
+          const ks = tg.map(function (x) { return s.roles[x]; }).sort().join(',');
+          const ok = ks === 'isolde,tristan';
+          return endGame(s, ok ? 'evil' : 'good', ok ? '刺客同時指認了特里斯坦與伊索德' : '刺客沒有同時指認出特里斯坦與伊索德', t, extra);
+        }
+        if (m === 'guinevere') {
+          if (tg.length !== 1) return s0;
+          const ok = s.roles[tg[0]] === 'guinevere';
+          return endGame(s, ok ? 'evil' : 'good', ok ? '刺客指認了女皇' : '刺客沒有指認出女皇', t, extra);
+        }
+        if (m === 'cleric') {
+          if (tg.length !== 1) return s0;
+          if (s.roles[tg[0]] !== 'cleric') return endGame(s, 'good', '刺客沒有認出牧師', t, extra);
+          s.assn = { step: 2, cleric: tg[0] };
+          s.feed.push({ type: 'clericHit' });
+          setPhase(s, 'assassin2', t);
+          return s;
+        }
+        return s0;
+      }
+      case 'av.kill2': {
+        if (s.phase !== 'assassin2' || s.roles[p] !== 'assassin') return s0;
+        if (A.clericCandidates(s).indexOf(d.role) < 0 || s.order.indexOf(d.target) < 0) return s0;
+        const ok = s.roles[d.target] === d.role;
+        return endGame(s, ok ? 'evil' : 'good', ok ? '刺客認出了牧師，也猜中了第二個目標' : '刺客認出牧師，但第二個目標猜錯了', t,
+          { kill: { mode: 'cleric', targets: [s.assn.cleric, d.target], role: d.role } });
+      }
+      default: return s0;
+    }
+  };
+
+  A.id = 'avalon'; A.name = '阿瓦隆'; A.prefix = 'av.'; A.ready = true; A.min = 5; A.max = 10;
+  Core.games.avalon = A;
+  g.Avalon = A;
+  if (typeof module !== 'undefined' && module.exports) module.exports = A;
+})(typeof globalThis !== 'undefined' ? globalThis : window);
+</script>
+<script>/* 桌邊 · 手機介面（大廳 + 阿瓦隆） */
+(function () {
+  'use strict';
+  const Core = window.Core, AV = window.Avalon, esc = Core.esc;
+  const qs = new URLSearchParams(location.search);
+  const LOCAL = qs.get('local') === '1';
+  const FBCFG = (window.TABLE_CONFIG && window.TABLE_CONFIG.firebase && window.TABLE_CONFIG.firebase.databaseURL) ? window.TABLE_CONFIG.firebase : null;
+  const ONLINE = LOCAL || !!FBCFG;
+  const store = LOCAL ? window.sessionStorage : window.localStorage;
+  function sget(k) { try { return store.getItem(k); } catch (e) { return null; } }
+  function sset(k, v) { try { if (v == null) store.removeItem(k); else store.setItem(k, v); } catch (e) { /* ignore */ } }
+  function lget(k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } }
+  function lset(k, v) { try { window.localStorage.setItem(k, v); } catch (e) { /* ignore */ } }
+
+  const GAMES = [
+    { id: 'avalon', n: '阿瓦隆', d: '5–10 人 · 推理與辯論', ready: true },
+    { id: 'werewolf', n: '一夜終極狼人', d: '3–10 人 · 一晚決勝負', ready: false },
+    { id: 'undercover', n: '誰是臥底', d: '4–12 人 · 描述詞語找臥底', ready: false }
+  ];
+
+  const S = {
+    screen: 'home', tp: null, folder: null, room: Core.newRoom(), meId: null, sim: false, viewAs: null,
+    code: '', tab: 'game', err: '', busy: false, conn: true, synced: false, joined: false,
+    name: lget('table:name') || '', joinCode: Core.normCode(qs.get('room') || ''),
+    sel: { ph: -1, team: [], excal: null, target: null, mode: null, targets: [], role: null },
+    holding: false, dirty: false, timeoutSent: {}, jitter: {}
+  };
+
+  const root = document.getElementById('root');
+  const tabsEl = document.getElementById('tabs');
+
+  /* ---------- 小工具 ---------- */
+  function me() { return S.sim ? S.viewAs : S.meId; }
+  function nm(id) { return esc(Core.nameOf(S.room, id)); }
+  function seat(id) { return Core.seatOf(S.room, id); }
+  function isHost() { return S.room.hostId === me(); }
+  function g() { return S.room.game; }
+  function tx(id) { return '<b>' + nm(id) + '</b>'; }
+  function names(ids) { return ids.map(nm).join('、') || '（無）'; }
+  function sideChip(side) { return '<span class="chip ' + (side === 'good' ? 'good' : 'evil') + '">' + (side === 'good' ? '好人' : '壞人') + '</span>'; }
+  function alignWord(a) { return a === 'good' ? '好人' : '壞人'; }
+  function toast(msg) {
+    const old = document.querySelector('.toast'); if (old) old.remove();
+    const el = document.createElement('div'); el.className = 'toast'; el.setAttribute('role', 'status'); el.textContent = msg;
+    document.body.appendChild(el); setTimeout(function () { el.remove(); }, 1800);
+  }
+  function copyText(text) {
+    function fb() {
+      const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      let ok = false; try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      ta.remove(); toast(ok ? '已複製' : '請手動複製：' + text);
+    }
+    try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(function () { toast('已複製'); }, fb); return; } } catch (e) { /* fallthrough */ }
+    fb();
+  }
+  function inviteText() {
+    const url = location.origin && location.origin !== 'null' ? location.origin + location.pathname + '?' + (LOCAL ? 'local=1&' : '') + 'room=' + S.code : '';
+    return '來玩桌邊！房號 ' + S.code + (url ? '\n' + url : '');
+  }
+
+  /* ---------- 連線 ---------- */
+  async function openTransport(code) {
+    if (LOCAL) return Core.openLocal(code);
+    return await Core.openFirebase(code, FBCFG);
+  }
+  function attach(tp) {
+    S.tp = tp; S.folder = new Core.Folder(); S.synced = false;
+    tp.onChange(function (items) { S.room = S.folder.update(items); S.synced = true; onRoom(); });
+    if (tp.onConnection) tp.onConnection(function (c) { S.conn = c; render(); });
+  }
+  function saveSession() { sset('table:sess', JSON.stringify({ code: S.code, id: S.meId, name: S.name })); }
+  function closeRoom(msg) {
+    try { if (S.tp) S.tp.close(); } catch (e) { /* ignore */ }
+    S.tp = null; S.folder = null; S.room = Core.newRoom(); S.screen = 'home'; S.sim = false; S.viewAs = null;
+    S.meId = null; S.code = ''; S.joined = false; S.synced = false; S.err = msg || ''; S.tab = 'game'; S.timeoutSent = {};
+    sset('table:sess', null);
+    render();
+  }
+  function onRoom() {
+    if (S.screen === 'room' && S.joined && !S.sim && S.room.created && !S.room.players.some(function (p) { return p.id === S.meId; })) {
+      closeRoom(S.room.phase === 'lobby' ? '你已不在這個房間裡' : '這個房間的遊戲已經開始，無法中途加入');
+      return;
+    }
+    if (S.room.created && S.room.players.some(function (p) { return p.id === S.meId; })) S.joined = true;
+    render();
+  }
+  function cleanedName() { S.name = Core.cleanName(S.name, ''); lset('table:name', S.name); return S.name; }
+
+  async function createRoom() {
+    if (!ONLINE) return;
+    const name = cleanedName() || '房主';
+    S.busy = true; S.err = ''; render();
+    try {
+      const code = Core.randomCode(), id = Core.randomId();
+      const tp = await openTransport(code);
+      S.code = code; S.meId = id; S.screen = 'room'; attach(tp); saveSession();
+      await tp.push({ k: 'create', p: id, d: { seed: Core.randomId() + Core.randomId(), name: name } });
+    } catch (e) { closeRoom('連線失敗：' + (e && e.message ? e.message : e)); }
+    S.busy = false; render();
+  }
+  async function joinRoom(code, resumeId) {
+    if (!ONLINE) return;
+    code = Core.normCode(code);
+    if (code.length !== 5) { S.err = '房號是 5 個字元'; render(); return; }
+    const name = cleanedName() || '玩家';
+    S.busy = true; S.err = ''; render();
+    try {
+      const id = resumeId || Core.randomId();
+      const tp = await openTransport(code);
+      S.code = code; S.meId = id; S.screen = 'room'; attach(tp); saveSession();
+      if (!resumeId) await tp.push({ k: 'join', p: id, d: { name: name } });
+      setTimeout(function () { if (S.tp === tp && !S.room.created) closeRoom('找不到房號 ' + code + '，請再確認'); }, 5000);
+    } catch (e) { closeRoom('連線失敗：' + (e && e.message ? e.message : e)); }
+    S.busy = false; render();
+  }
+  async function startSim() {
+    const tp = Core.openSim();
+    S.sim = true; S.code = 'DEMO'; S.screen = 'room'; S.joined = true; attach(tp);
+    const nmz = ['小明', '阿華', '小美', '大雄', '靜香', '胖虎', '小夫'];
+    S.meId = 'p1'; S.viewAs = 'p1';
+    await tp.push({ k: 'create', p: 'p1', d: { seed: Core.randomId(), name: Core.cleanName(S.name, '') || nmz[0] } });
+    for (let i = 2; i <= 7; i++) await tp.push({ k: 'join', p: 'p' + i, d: { name: nmz[i - 1] } });
+  }
+  function send(k, d) { return S.tp ? S.tp.push({ k: k, p: me(), d: d || {} }) : Promise.resolve(); }
+  function play(k, d) { const s = g(); return send(k, Object.assign({ ph: s ? s.ph : 0 }, d || {})); }
+
+  /* ---------- 選取狀態（依階段重置） ---------- */
+  function sel() {
+    const s = g(); const ph = s ? s.ph : -2;
+    if (S.sel.ph !== ph) S.sel = { ph: ph, team: [], excal: null, target: null, mode: null, targets: [], role: null };
+    return S.sel;
+  }
+
+  /* ---------- 畫面 ---------- */
+  function render() {
+    if (S.holding) { S.dirty = true; return; }
+    S.dirty = false;
+    let html = '';
+    const inGame = S.screen === 'room' && S.room.created && S.room.phase === 'game' && g();
+    if (S.screen === 'home') html = homeView();
+    else if (!S.room.created) html = '<div class="card"><h2>連線中…</h2><p class="muted">正在連到房間 ' + esc(S.code) + '</p><button class="link" data-act="home">取消</button></div>';
+    else html = topBar() + (S.room.phase === 'lobby' ? lobbyView() : gameView());
+    const active = document.activeElement;
+    const keep = active && active.id && active.tagName === 'INPUT' ? { id: active.id, a: active.selectionStart, b: active.selectionEnd } : null;
+    root.innerHTML = html;
+    document.body.classList.toggle('has-tabs', !!inGame);
+    tabsEl.hidden = !inGame;
+    if (inGame) {
+      tabsEl.innerHTML = '<div class="tabs-in" role="tablist">' + [['game', '遊戲'], ['me', '我的身分'], ['log', '紀錄']].map(function (t) {
+        return '<button role="tab" aria-selected="' + (S.tab === t[0]) + '" data-act="tab" data-v="' + t[0] + '">' + t[1] + '</button>';
+      }).join('') + '</div>';
+    } else tabsEl.innerHTML = '';
+    if (keep) { const el = document.getElementById(keep.id); if (el) { el.focus(); try { el.setSelectionRange(keep.a, keep.b); } catch (e) { /* ignore */ } } }
+    tickCountdowns();
+  }
+
+  function homeView() {
+    const dis = !ONLINE || S.busy ? ' disabled' : '';
+    return '<div class="stack"><h1>桌邊</h1><p class="muted">面對面聚會用的桌遊小幫手。每人一支手機，只負責發身分與記錄，討論靠嘴巴。</p></div>' +
+      '<div class="card"><label for="nm"><h3>你的名字</h3></label><input id="nm" class="txt" maxlength="10" autocomplete="off" placeholder="例如：小明" value="' + esc(S.name) + '"></div>' +
+      (S.err ? '<p class="err" role="alert">' + esc(S.err) + '</p>' : '') +
+      (ONLINE ? '' : '<div class="card warn small">這個版本還沒有連到伺服器，只能用下方的單機示範。正式使用請看「設定教學」。</div>') +
+      '<div class="card"><button class="btn primary" data-act="create"' + dis + '>開一個新房間</button>' +
+      '<div class="muted small" style="text-align:center">或輸入朋友給你的房號</div>' +
+      '<input id="jc" class="txt code" maxlength="5" autocomplete="off" inputmode="text" placeholder="房號" value="' + esc(S.joinCode) + '" aria-label="房號">' +
+      '<button class="btn" data-act="join"' + dis + '>加入房間</button></div>' +
+      '<button class="btn ghost" data-act="sim">單機示範（一個畫面扮演 7 個人）</button>';
+  }
+
+  function topBar() {
+    let right = '';
+    if (S.sim) {
+      right = '<select class="sel" data-act-change="viewas" aria-label="切換視角">' + S.room.players.map(function (p) {
+        return '<option value="' + p.id + '"' + (p.id === S.viewAs ? ' selected' : '') + '>以「' + esc(p.name) + '」的視角</option>';
+      }).join('') + '</select>';
+    } else {
+      right = '<span class="conn' + (S.conn ? '' : ' off') + '">' + (S.conn ? '已連線' : '連線中斷…') + '</span>';
+    }
+    const chip = S.sim ? '<span class="chip">示範</span>' : '<button class="codechip" data-act="copy" aria-label="複製邀請文字">' + esc(S.code) + '</button>';
+    return '<div class="top">' + chip + right + '</div>';
+  }
+
+  /* ---------- 大廳 ---------- */
+  function cfgNow() {
+    const c = Object.assign(AV.defaultCfg(), Core.clone(S.room.cfg.avalon || {}));
+    c.opt = c.opt || {}; return c;
+  }
+  function setCfg(mut) { const c = Core.clone(cfgNow()); mut(c); send('cfg', { gameId: 'avalon', cfg: c }); }
+  function applyPreset(c, v, n) {
+    c.opt = {};
+    if (v === 'teach') return;
+    c.opt.percival = true; c.opt.morgana = true;
+    if (v === 'full') ['mordred', 'oberon'].forEach(function (k) { c.opt[k] = true; if (!AV.check(c, n).ok) delete c.opt[k]; });
+  }
+  const OPT_LABEL = {
+    percival: ['派西維爾', R_d('percival')], lovers: ['特里斯坦 & 伊索德', '兩個好人互相認識；刺客要同時猜中兩人'],
+    cleric: ['牧師', R_d('cleric')], troublemaker: ['麻煩友', R_d('troublemaker')], guinevere: ['女皇（需蘭斯洛特）', R_d('guinevere')],
+    lancelots: ['正義 / 邪惡蘭斯洛特', '各佔一個好人、壞人名額，第 3–5 次任務前可能交換陣營'],
+    morgana: ['莫甘娜', R_d('morgana')], mordred: ['莫德雷德', R_d('mordred')], oberon: ['奧伯倫', R_d('oberon')],
+    trickster: ['騙子', R_d('trickster')], witch: ['巫婆', R_d('witch')], revealer: ['被揭示者', R_d('revealer')],
+    lunatic: ['瘋子', R_d('lunatic')], brute: ['野蠻人', R_d('brute')]
+  };
+  function R_d(k) { return AV.R[k].d; }
+
+  function optBtn(act, key, title, desc, on, disabled) {
+    return '<button class="opt" data-act="' + act + '" data-k="' + key + '" aria-pressed="' + (!!on) + '"' + (disabled ? ' disabled' : '') + '><span class="box">' + (on ? '✓' : '') + '</span><span><span class="ot">' + esc(title) + '</span><br><span class="od">' + esc(desc) + '</span></span></button>';
+  }
+
+  function lobbyView() {
+    const room = S.room, n = room.players.length, host = isHost();
+    const cfg = cfgNow(); const chk = AV.check(cfg, n);
+    const list = '<ul class="plist">' + room.players.map(function (p, i) {
+      const mine = p.id === me();
+      let ctl = '';
+      if (host) {
+        ctl = '<button class="mini" data-act="move" data-id="' + p.id + '" data-dir="-1" aria-label="上移"' + (i === 0 ? ' disabled' : '') + '>▲</button>' +
+          '<button class="mini" data-act="move" data-id="' + p.id + '" data-dir="1" aria-label="下移"' + (i === n - 1 ? ' disabled' : '') + '>▼</button>' +
+          (p.id !== me() ? '<button class="mini" data-act="kick" data-id="' + p.id + '" aria-label="請出">✕</button>' : '');
+      }
+      return '<li class="' + (mine ? 'me' : '') + '"><span class="no">' + (i + 1) + '</span><span class="nm">' + esc(p.name) + '</span>' +
+        (p.id === room.hostId ? '<span class="chip acc">房主</span>' : '') + (mine && !S.sim ? '<span class="chip">你</span>' : '') + ctl + '</li>';
+    }).join('') + '</ul>';
+    let h = '<div class="card"><div class="row"><h2>等人加入</h2><span class="muted">' + n + ' / 10 人</span></div>' + list +
+      (S.sim && host ? '<div class="btnrow"><button class="btn slim" data-act="addbot"' + (n >= 10 ? ' disabled' : '') + '>＋ 加一位</button></div>' : '') +
+      '<p class="muted small">座位順序就是任務隊長輪流的順序，' + (host ? '可以用 ▲▼ 調成大家實際的圍坐順序。' : '房主可以調整。') + '</p>' +
+      (!S.sim ? '<button class="btn" data-act="copy">複製邀請（房號 ' + esc(S.code) + '）</button>' : '') + '</div>';
+
+    h += '<div class="card"><h3>選擇遊戲</h3><div class="opts">' + GAMES.map(function (gm) {
+      return '<button class="opt" aria-pressed="' + (gm.id === 'avalon') + '"' + (gm.ready && host ? '' : ' disabled') + ' data-act="game" data-k="' + gm.id + '"><span class="box">' + (gm.id === 'avalon' ? '✓' : '') + '</span><span><span class="ot">' + gm.n + (gm.ready ? '' : '（製作中）') + '</span><br><span class="od">' + gm.d + '</span></span></button>';
+    }).join('') + '</div></div>';
+
+    /* 角色設定 */
+    const sl = chk.slots;
+    const slotChip = function (label, o) { return '<span class="chip ' + (o.used > o.max ? 'evil' : '') + '">' + label + ' ' + o.used + '/' + o.max + '</span>'; };
+    let c = '<div class="card"><div class="row"><h3>阿瓦隆角色</h3><div class="slots">' + slotChip('好人名額', sl.good) + slotChip('壞人名額', sl.evil) + '</div></div>';
+    if (host) {
+      c += '<div class="seg" role="group" aria-label="預設組合"><button data-act="preset" data-v="teach">教學局</button><button data-act="preset" data-v="classic">經典局</button><button data-act="preset" data-v="full">完整局</button></div>' +
+        '<p class="muted small">教學局：梅林、刺客、忠臣（其餘壞人是爪牙）。經典局再加派西維爾、莫甘娜。完整局再加莫德雷德、奧伯倫（名額夠才加）。</p>';
+      c += '<div class="opts">' + optBtn('togcfg', 'pure', '終極梅林', '梅林改成看得到壞人的具體角色', cfg.pure) + '</div>';
+      c += '<h3>好人角色</h3><div class="opts">' + AV.OPT_GOOD.map(function (k) { return optBtn('tog', k, OPT_LABEL[k][0], OPT_LABEL[k][1], cfg.opt[k]); }).join('') + '</div>';
+      c += '<h3>壞人角色（刺客固定在場）</h3><div class="opts">' + AV.OPT_EVIL.map(function (k) { return optBtn('tog', k, OPT_LABEL[k][0], OPT_LABEL[k][1], cfg.opt[k]); }).join('') + '</div>';
+      c += '<h3>道具</h3><div class="opts">' + optBtn('togcfg', 'lady', '湖中仙女', '第 3、4、5 次任務前，持有者查驗一人的陣營', cfg.lady) +
+        optBtn('togcfg', 'excal', '神劍', '隊長指定一位隊員持有，可在翻牌前改掉另一位隊員的牌', cfg.excal) + '</div>';
+    } else {
+      c += '<p class="muted small">由房主設定。</p>';
+    }
+    if (chk.ok) {
+      const inplay = AV.rolesInPlay(chk.roles).map(function (r) { return AV.R[r.key].n + (r.count > 1 ? '×' + r.count : ''); }).join('、');
+      c += '<div class="note"><b>本局會用到：</b>' + esc(inplay) + (cfg.lady ? '、湖中仙女' : '') + (cfg.excal ? '、神劍' : '') + '</div>';
+    }
+    chk.errors.forEach(function (e) { c += '<div class="card warn small">⚠ ' + esc(e) + '</div>'; });
+    chk.warnings.forEach(function (e) { c += '<p class="muted small">提醒：' + esc(e) + '</p>'; });
+    c += '</div>';
+    h += c;
+
+    if (host) h += '<button class="btn primary" data-act="start"' + (chk.ok ? '' : ' disabled') + '>開始遊戲（' + n + ' 人）</button>';
+    else h += '<div class="card"><p class="muted" style="text-align:center">等房主開始遊戲…</p></div>';
+    h += '<button class="link" data-act="leave">離開房間</button>';
+    return h;
+  }
+
+  /* ---------- 遊戲 ---------- */
+  function gameView() {
+    const s = g();
+    if (!s) return '';
+    if (S.tab === 'me') return meTab(s);
+    if (S.tab === 'log') return logTab(s);
+    return gameTab(s);
+  }
+
+  function track(s) {
+    let h = '<div class="track">';
+    for (let i = 0; i < 5; i++) {
+      const e = s.hist[i]; let cls = '', txt = String(AV.teamSizeFor(s.n, i));
+      if (e) {
+        if (e.hidden && !s.over) { cls = 'hid'; txt = '?'; } else { cls = e.real === 'S' ? 'ok' : 'bad'; txt = e.real === 'S' ? '成功' : '失敗'; }
+      } else if (i === s.q && !s.over) cls = 'cur';
+      const sub = (e ? '' : AV.teamSizeFor(s.n, i) + ' 人') + (i === 3 && s.n >= 7 ? (e ? '' : '<br>') + '需2張敗' : '');
+      h += '<div class="qc"><div class="qt ' + cls + '" aria-label="第' + (i + 1) + '次任務">' + txt + '</div><div class="qs">' + sub + '</div></div>';
+    }
+    return h + '</div>';
+  }
+  function pips(s) {
+    let h = '<div class="pips" aria-label="連續否決 ' + s.rejects + ' 次，滿 5 次壞人獲勝">';
+    for (let i = 0; i < 5; i++) h += '<span class="pip' + (i < s.rejects ? ' on' : '') + '"></span>';
+    return h + '</div>';
+  }
+  function roster(s) {
+    const L = AV.leaderId(s);
+    return '<ul class="plist">' + s.order.map(function (id, i) {
+      let ch = '';
+      if (id === L && s.phase !== 'over') ch += '<span class="chip acc">隊長</span>';
+      if (s.team.indexOf(id) >= 0 && ['vote', 'voteres', 'quest', 'pre', 'wcheck'].indexOf(s.phase) >= 0) ch += '<span class="chip">隊員</span>';
+      if (s.excal === id && s.team.length && ['vote', 'voteres', 'quest', 'pre', 'wcheck'].indexOf(s.phase) >= 0) ch += '<span class="chip warn">神劍</span>';
+      if (s.lady && s.lady.holder === id && s.phase !== 'over') ch += '<span class="chip warn">湖中仙女</span>';
+      if (s.revealed === id) ch += '<span class="chip evil">被揭示者·壞人</span>';
+      if (s.phase === 'vote' && id in s.votes) ch += '<span class="chip good">已投票</span>';
+      if (s.phase === 'quest' && s.team.indexOf(id) >= 0 && s.cards[id]) ch += '<span class="chip good">已出牌</span>';
+      return '<li class="' + (id === me() ? 'me' : '') + '"><span class="no">' + (i + 1) + '</span><span class="nm">' + nm(id) + '</span>' + ch + '</li>';
+    }).join('') + '</ul>';
+  }
+  function cd(at) { return '<span class="cd" data-at="' + at + '"></span>'; }
+  function pgrid(ids, pick, disabledFn, subFn) {
+    return '<div class="pgrid">' + ids.map(function (id) {
+      const on = pick(id), dis = disabledFn && disabledFn(id);
+      return '<button class="pl' + (on ? ' sel' : '') + (id === me() ? ' me' : '') + '" data-act="pickp" data-id="' + id + '" aria-pressed="' + (!!on) + '"' + (dis ? ' disabled' : '') + '><span class="pn">' + nm(id) + (id === me() ? '（你）' : '') + '</span><span class="ps">' + (subFn ? subFn(id) : '座位 ' + seat(id)) + '</span></button>';
+    }).join('') + '</div>';
+  }
+
+  function gameTab(s) {
+    const id = me(), L = AV.leaderId(s), tl = AV.tally(s);
+    let h = '<div class="card"><div class="row"><h2>' + (s.over ? '遊戲結束' : '第 ' + (s.q + 1) + ' 次任務') + '</h2>' + pips(s) + '</div>' + track(s) +
+      '<div class="muted small">好人 ' + tl.succ + ' 勝 · 壞人 ' + tl.fail + ' 勝' + (s.hist.some(function (e) { return e.hidden; }) && !s.over ? '（含被隱藏的結果）' : '') + ' · 連續否決 ' + s.rejects + ' / 5</div></div>';
+    const st = sel();
+    const lan = s.lanLog.length && s.lanLog[s.lanLog.length - 1].q === s.q ? s.lanLog[s.lanLog.length - 1] : null;
+    if (lan && ['team', 'vote', 'voteres'].indexOf(s.phase) >= 0 && s.rejects === 0 && s.phase === 'team') {
+      h += '<div class="note">本次任務前翻出蘭斯洛特忠誠卡：<b>' + (lan.c === 'S' ? '交換陣營！' : '空白，沒有變化') + '</b></div>';
+    }
+
+    switch (s.phase) {
+      case 'team': {
+        const size = AV.teamSize(s);
+        if (id === L) {
+          h += '<div class="card accent"><h2>你是隊長：選 ' + size + ' 位隊員</h2><p class="muted small">可以選自己。已選 ' + st.team.length + ' / ' + size + '</p>' +
+            pgrid(s.order, function (x) { return st.team.indexOf(x) >= 0; }) ;
+          if (s.cfg.excal) {
+            const cand = st.team.filter(function (x) { return x !== id; });
+            h += '<h3>神劍交給誰？（不能給自己）</h3>' + (cand.length ? '<div class="pgrid">' + cand.map(function (x) {
+              return '<button class="pl' + (st.excal === x ? ' sel' : '') + '" data-act="excalto" data-id="' + x + '" aria-pressed="' + (st.excal === x) + '"><span class="pn">' + nm(x) + '</span></button>';
+            }).join('') + '</div>' : '<p class="muted small">先選好隊員，再指定神劍持有者。</p>');
+          }
+          const ready = st.team.length === size && (!s.cfg.excal || (st.excal && st.team.indexOf(st.excal) >= 0));
+          h += '<button class="btn primary" data-act="propose"' + (ready ? '' : ' disabled') + '>提出隊伍，開始投票</button></div>';
+        } else {
+          h += '<div class="card"><h2>等 ' + tx(L) + ' 選隊員</h2><p class="muted">這次任務要 ' + size + ' 人。趁現在討論吧。</p></div>';
+        }
+        break;
+      }
+      case 'vote': {
+        const voted = id in s.votes;
+        h += '<div class="card accent"><h2>表決這支隊伍</h2><p>隊長 ' + tx(L) + '</p><p>隊員：' + names(s.team) + '</p>' +
+          (s.excal ? '<p>神劍持有者：' + tx(s.excal) + '</p>' : '');
+        if (!voted) h += '<div class="btnrow"><button class="btn yes" data-act="vote" data-v="1">贊成</button><button class="btn no" data-act="vote" data-v="0">反對</button></div>';
+        else h += '<div class="banner">你已投票。等其他人（' + Object.keys(s.votes).length + ' / ' + s.n + '）</div>';
+        const wait = s.order.filter(function (x) { return !(x in s.votes); });
+        if (wait.length) h += '<p class="muted small">還沒投：' + names(wait) + '</p>';
+        h += '</div>';
+        break;
+      }
+      case 'voteres': {
+        const v = s.lastVote;
+        h += '<div class="card ' + (v.approve ? 'good' : 'evil') + '"><h2>' + (v.approve ? '隊伍通過' : '隊伍被否決') + '</h2><p>贊成 ' + v.yes + ' · 反對 ' + v.no + '</p>' +
+          '<p>贊成：' + names(s.order.filter(function (x) { return s.votes[x]; })) + '</p><p>反對：' + names(s.order.filter(function (x) { return !s.votes[x]; })) + '</p>' +
+          (!v.approve ? '<p class="small">這是連續第 ' + (s.rejects + 1) + ' 次否決' + (s.rejects + 1 >= 5 ? '，壞人將直接獲勝。' : '。') + '</p>' : '') +
+          '<button class="btn primary" data-act="next">' + (v.approve ? '開始任務' : (s.rejects + 1 >= 5 ? '看結果' : '換下一位隊長')) + '</button></div>';
+        break;
+      }
+      case 'quest': {
+        const inTeam = s.team.indexOf(id) >= 0;
+        if (inTeam && !s.cards[id]) {
+          const ok = AV.allowedCards(s, id), why = AV.forcedWhy(s, id);
+          h += '<div class="card accent"><h2>你在任務隊伍裡：出一張牌</h2>' + (why ? '<p class="muted">' + esc(why) + '</p>' : '') +
+            '<div class="btnrow">' + (ok.indexOf('S') >= 0 ? '<button class="btn yes" data-act="card" data-c="S">成功</button>' : '') + (ok.indexOf('F') >= 0 ? '<button class="btn no" data-act="card" data-c="F">失敗</button>' : '') + '</div></div>';
+        } else if (inTeam) {
+          h += '<div class="card"><h2>你已出牌</h2><p class="muted">等其他隊員（' + Object.keys(s.cards).length + ' / ' + s.team.length + '）</p></div>';
+        } else {
+          h += '<div class="card"><h2>任務進行中</h2><p class="muted">隊員 ' + names(s.team) + ' 正在出牌（' + Object.keys(s.cards).length + ' / ' + s.team.length + '）。</p></div>';
+        }
+        break;
+      }
+      case 'pre': {
+        let any = false;
+        if (id === s.excal && !s.pre.excalDone) {
+          any = true;
+          const cand = s.team.filter(function (x) { return x !== id; });
+          h += '<div class="card accent"><h2>神劍：要改誰的牌？</h2><p class="muted small">被改的人手上的牌會翻成相反（成功↔失敗），他本人會知道。也可以不使用。倒數 ' + cd(s.t0 + AV.PRE_MS) + '</p>' +
+            pgrid(cand, function (x) { return st.target === x; }) +
+            '<div class="btnrow"><button class="btn primary" data-act="excalgo"' + (st.target ? '' : ' disabled') + '>使用神劍</button><button class="btn" data-act="excalpass">不使用</button></div></div>';
+        }
+        if (id === s.witchId && !s.pre.witchDone) {
+          any = true;
+          h += '<div class="card accent"><h2>巫婆：要隱藏這次任務結果嗎？</h2><p class="muted small">整局只能用一次。隱藏後，系統會隨機選一位玩家（不是你）去查驗某人的陣營。倒數 ' + cd(s.t0 + AV.PRE_MS) + '</p>' +
+            '<div class="btnrow"><button class="btn no" data-act="witch" data-v="1">隱藏結果</button><button class="btn" data-act="witch" data-v="0">不隱藏</button></div></div>';
+        }
+        if (!any) h += '<div class="card"><h2>翻牌前的特殊行動時間</h2><p class="muted">有人可能正在行動，請稍候。' + cd(s.t0 + AV.PRE_MS) + '</p></div>';
+        break;
+      }
+      case 'wcheck': {
+        if (id === s.wc.checker) {
+          const cand = s.order.filter(function (x) { return x !== id; });
+          h += '<div class="card accent"><h2>你被選為查驗者</h2><p class="muted small">可以查驗任何一人的陣營（只有你看得到結果），也可以放棄。倒數 ' + cd(s.t0 + AV.WC_MS) + '</p>' +
+            pgrid(cand, function (x) { return st.target === x; }) +
+            '<div class="btnrow"><button class="btn primary" data-act="wchk"' + (st.target ? '' : ' disabled') + '>查驗</button><button class="btn" data-act="wskip">放棄</button></div></div>';
+        } else {
+          h += '<div class="card"><h2>任務結果被隱藏了</h2><p class="muted">' + tx(s.wc.checker) + ' 被選為查驗者，正在決定要不要查驗。' + cd(s.t0 + AV.WC_MS) + '</p></div>';
+        }
+        break;
+      }
+      case 'qres': {
+        const e = s.hist[s.hist.length - 1];
+        if (e.hidden) h += '<div class="card warn"><h2>任務結果被巫婆隱藏</h2><p>失敗張數不公開。</p>';
+        else h += '<div class="card ' + (e.real === 'S' ? 'good' : 'evil') + '"><h2>任務' + (e.real === 'S' ? '成功' : '失敗') + '</h2><p>隊員 ' + names(e.team) + '</p><p>失敗票 ' + e.fails + ' 張' + (e.need > 1 ? '（本次需要 ' + e.need + ' 張才算失敗）' : '') + '</p>';
+        if (e.flip) h += '<p class="small">神劍使用過：' + tx(e.flip.by) + ' 改了一位隊員的牌。</p>';
+        if (s.revealed && s.feed.some(function (f) { return f.type === 'reveal' && f.id === s.revealed; }) && s.hist.filter(function (x) { return !x.hidden && x.real === 'F'; }).length === 2 && !e.hidden && e.real === 'F') {
+          h += '<p class="small"><b>' + nm(s.revealed) + '</b> 是被揭示者（壞人）。</p>';
+        }
+        h += '<button class="btn primary" data-act="next">下一輪</button></div>';
+        break;
+      }
+      case 'lady': {
+        if (id === s.lady.holder) {
+          const cand = s.order.filter(function (x) { return s.lady.held.indexOf(x) < 0; });
+          h += '<div class="card accent"><h2>湖中仙女：查驗一個人</h2><p class="muted small">只有你看得到他顯示的陣營，之後湖中仙女會傳給他。倒數 ' + cd(s.t0 + AV.LADY_MS) + '</p>' +
+            pgrid(cand, function (x) { return st.target === x; }) +
+            '<button class="btn primary" data-act="ladygo"' + (st.target ? '' : ' disabled') + '>查驗</button></div>';
+        } else {
+          h += '<div class="card"><h2>湖中仙女</h2><p class="muted">' + tx(s.lady.holder) + ' 正在查驗一個人。' + cd(s.t0 + AV.LADY_MS) + '</p></div>';
+        }
+        break;
+      }
+      case 'assassin': {
+        const asn = s.roles[id] === 'assassin';
+        if (asn) {
+          const modes = AV.killModes(s); if (!st.mode) st.mode = modes[0];
+          const lab = { merlin: '刺殺梅林', lovers: '指認特里斯坦＋伊索德', guinevere: '指認女皇', cleric: '指認牧師' };
+          const need = st.mode === 'lovers' ? 2 : 1;
+          h += '<div class="card evil"><h2>好人拿下三次成功了——輪到刺客</h2>' +
+            (modes.length > 1 ? '<div class="seg" role="group">' + modes.map(function (m) { return '<button data-act="mode" data-v="' + m + '" aria-pressed="' + (st.mode === m) + '">' + lab[m] + '</button>'; }).join('') + '</div>' : '<p>' + lab[modes[0]] + '</p>') +
+            '<p class="muted small">選 ' + need + ' 人。已選 ' + st.targets.length + ' / ' + need + '</p>' +
+            pgrid(s.order, function (x) { return st.targets.indexOf(x) >= 0; }) +
+            '<button class="btn primary" data-act="kill"' + (st.targets.length === need ? '' : ' disabled') + '>確認指認</button></div>';
+        } else {
+          h += '<div class="card"><h2>好人拿下三次成功</h2><p class="muted">刺客正在決定刺殺對象。壞人還有機會翻盤！</p></div>';
+        }
+        break;
+      }
+      case 'assassin2': {
+        const asn = s.roles[id] === 'assassin';
+        if (asn) {
+          const cands = AV.clericCandidates(s);
+          h += '<div class="card evil"><h2>牧師被認出來了！</h2><p class="muted small">再指認一位好人與他的角色。</p><h3>角色</h3><div class="seg" style="flex-wrap:wrap">' + cands.map(function (k) {
+            return '<button data-act="role" data-v="' + k + '" aria-pressed="' + (st.role === k) + '">' + AV.R[k].n + '</button>';
+          }).join('') + '</div><h3>是誰</h3>' + pgrid(s.order, function (x) { return st.target === x; }) +
+            '<button class="btn primary" data-act="kill2"' + (st.role && st.target ? '' : ' disabled') + '>確認</button></div>';
+        } else {
+          h += '<div class="card"><h2>刺客認出牧師了</h2><p class="muted">他還需要猜中第二個目標。</p></div>';
+        }
+        break;
+      }
+      case 'over': h += overView(s); break;
+      default: break;
+    }
+    if (s.phase !== 'over') h += '<div class="card"><h3>玩家</h3>' + roster(s) + '</div>';
+    return h;
+  }
+
+  function overView(s) {
+    const o = s.over, win = o.winner;
+    let h = '<div class="banner ' + win + '" role="status"><div style="font-size:24px">' + (win === 'good' ? '好人獲勝' : '壞人獲勝') + '</div><div>' + esc(o.why) + '</div></div>';
+    if (o.kill) {
+      h += '<div class="note">刺客指認：' + names(o.kill.targets) + (o.kill.role ? '（猜他是' + AV.R[o.kill.role].n + '）' : '') + '</div>';
+    }
+    h += '<div class="card"><h3>所有人的角色</h3><ul class="plist">' + s.order.map(function (id, i) {
+      const k = s.roles[id], al = AV.align(s, id);
+      const lan = (k === 'lancelot_good' || k === 'lancelot_evil') ? '<span class="chip">最後陣營：' + alignWord(al) + '</span>' : '';
+      return '<li class="' + (id === me() ? 'me' : '') + '"><span class="no">' + (i + 1) + '</span><span class="nm">' + nm(id) + '</span><b>' + AV.R[k].n + '</b>' + sideChip(AV.R[k].side) + lan + '</li>';
+    }).join('') + '</ul></div>';
+    h += '<button class="btn primary" data-act="again">再玩一局（回到大廳）</button>';
+    return h;
+  }
+
+  /* 我的身分 */
+  function noteText(n) {
+    switch (n.type) {
+      case 'lanAlign': return '你現在的陣營：<b>' + alignWord(n.align) + '</b>（' + (n.flipped ? '已經交換過' : '還沒交換') + '）。目前是壞人必須出失敗，是好人必須出成功。';
+      case 'clericSelf': return '你是第 1 次任務的隊長，沒有資訊。';
+      case 'cleric': return '第 1 次任務的隊長 ' + tx(n.target) + ' 顯示為 <b>' + alignWord(n.shown) + '</b>。';
+      case 'lady': return '湖中仙女（第 ' + (n.q + 1) + ' 次任務前）：' + tx(n.target) + ' 顯示為 <b>' + alignWord(n.shown) + '</b>。';
+      case 'wcheck': return '查驗（第 ' + (n.q + 1) + ' 次任務）：' + tx(n.target) + ' 顯示為 <b>' + alignWord(n.shown) + '</b>。';
+      case 'wcheckNone': return '第 ' + (n.q + 1) + ' 次任務你沒有查驗任何人。';
+      case 'excal': return n.mine === 'holder' ? '第 ' + (n.q + 1) + ' 次任務：你用神劍把 ' + tx(n.target) + ' 的牌改成了「' + (n.to === 'S' ? '成功' : '失敗') + '」。'
+        : '第 ' + (n.q + 1) + ' 次任務：神劍持有者 ' + tx(n.by) + ' 把你的牌改成了「' + (n.to === 'S' ? '成功' : '失敗') + '」。';
+      default: return '';
+    }
+  }
+  function meTab(s) {
+    const id = me(); const inf = AV.info(s, id), R = AV.R[inf.role];
+    let open = '<div class="rname ' + inf.side + '">' + R.n + '</div><div>' + sideChip(inf.side) + '</div><p>' + esc(R.d) + '</p>';
+    inf.groups.forEach(function (gr) {
+      open += '<div class="glist"><div class="gt">' + esc(gr.title) + '</div>';
+      if (gr.items) open += gr.items.length ? gr.items.map(function (it) { return '<div class="note">' + tx(it.id) + ' — ' + esc(it.label) + '</div>'; }).join('') : '<div class="note">（沒有）</div>';
+      else open += gr.ids.length ? '<div class="wrap">' + gr.ids.map(function (x) { return '<span class="chip">' + nm(x) + '</span>'; }).join('') + '</div>' : '<div class="note">（沒有）</div>';
+      open += '</div>';
+    });
+    if (inf.notes.length) open += '<div class="notes">' + inf.notes.map(function (n) { return '<div class="note">' + noteText(n) + '</div>'; }).join('') + '</div>';
+    if (!inf.groups.length && !inf.notes.length) open += '<div class="note">你沒有任何開局資訊，靠觀察與推理吧。</div>';
+    const inplay = AV.rolesInPlay(Object.keys(s.roles).map(function (i) { return s.roles[i]; })).map(function (r) { return AV.R[r.key].n + (r.count > 1 ? '×' + r.count : ''); }).join('、');
+    return '<div class="stack"><h2>我的身分</h2>' +
+      '<div class="reveal" data-hold="1" tabindex="0" role="button" aria-label="按住查看身分"><div class="shut"><div class="hint">按住查看身分</div><div class="muted small">放開就會蓋住，旁邊的人看不到</div></div><div class="open">' + open + '</div></div>' +
+      '<div class="card"><h3>本局角色</h3><p class="small">' + esc(inplay) + '</p></div></div>';
+  }
+
+  /* 紀錄 */
+  function feedText(f) {
+    switch (f.type) {
+      case 'whide': return '第 ' + (f.q + 1) + ' 次任務的結果被隱藏，' + tx(f.checker) + ' 被選為查驗者。';
+      case 'reveal': return tx(f.id) + ' 是被揭示者（壞人）。';
+      case 'excal': return '第 ' + (f.q + 1) + ' 次任務：' + tx(f.by) + ' 用神劍改了 ' + tx(f.target) + ' 的牌。';
+      case 'excalPass': return '第 ' + (f.q + 1) + ' 次任務：' + tx(f.by) + ' 沒有使用神劍。';
+      case 'wcheck': return tx(f.by) + ' 查驗了 ' + tx(f.target) + '（結果只有他知道）。';
+      case 'wcheckNone': return tx(f.by) + ' 沒有查驗任何人。';
+      case 'lady': return '第 ' + (f.q + 1) + ' 次任務前：' + tx(f.by) + ' 用湖中仙女查驗了 ' + tx(f.target) + '（結果只有他知道）。';
+      case 'ladySkip': return '第 ' + (f.q + 1) + ' 次任務前：湖中仙女超時，略過。';
+      case 'clericHit': return '刺客認出了牧師，還要猜第二個目標。';
+      default: return '';
+    }
+  }
+  function logTab(s) {
+    let h = '<div class="stack"><h2>紀錄</h2>';
+    h += '<div class="card"><h3>任務</h3><div class="hist">' + (s.hist.length ? s.hist.map(function (e) {
+      const res = e.hidden && !s.over ? '結果被隱藏' : (e.real === 'S' ? '成功' : '失敗') + '（失敗票 ' + e.fails + '）';
+      return '<div class="hrow"><b>第 ' + (e.q + 1) + ' 次</b> · 隊長 ' + nm(e.leader) + '<br>隊員 ' + names(e.team) + (e.excal ? '（神劍：' + nm(e.excal) + '）' : '') + '<br>' + res + '</div>';
+    }).join('') : '<span class="muted">還沒有完成的任務</span>') + '</div></div>';
+    h += '<div class="card"><h3>投票</h3><div class="hist">' + (s.voteHist.length ? s.voteHist.slice().reverse().map(function (v) {
+      return '<div class="hrow"><b>第 ' + (v.q + 1) + ' 次</b> · 隊長 ' + nm(v.leader) + ' · ' + (v.approve ? '通過' : '否決') + '<br>隊員 ' + names(v.team) + '<br>' +
+        '贊成：' + names(s.order.filter(function (x) { return v.votes[x]; })) + '<br>反對：' + names(s.order.filter(function (x) { return !v.votes[x]; })) + '</div>';
+    }).join('') : '<span class="muted">還沒有投票</span>') + '</div></div>';
+    const ev = s.feed.map(feedText).filter(Boolean);
+    const lan = s.lanLog.map(function (l) { return '第 ' + (l.q + 1) + ' 次任務前翻出忠誠卡：' + (l.c === 'S' ? '<b>交換陣營</b>' : '空白'); });
+    if (ev.length || lan.length) h += '<div class="card"><h3>事件</h3><div class="hist">' + lan.concat(ev).map(function (t) { return '<div class="hrow">' + t + '</div>'; }).join('') + '</div></div>';
+    h += '<button class="link" data-act="leave">離開這個房間</button></div>';
+    return h;
+  }
+
+  /* ---------- 倒數與逾時 ---------- */
+  function tickCountdowns() {
+    const now = S.tp ? S.tp.now() : Date.now();
+    document.querySelectorAll('[data-at]').forEach(function (el) {
+      const at = +el.getAttribute('data-at'); const sec = Math.max(0, Math.ceil((at - now) / 1000));
+      el.textContent = sec + ' 秒';
+    });
+  }
+  function tickTimeout() {
+    tickCountdowns();
+    const room = S.room; if (!S.tp || !room.created || room.phase !== 'game' || !room.game) return;
+    const s = room.game; const dl = AV.deadline(s); if (!dl) return;
+    const now = S.tp.now();
+    const key = s.ph;
+    if (S.jitter[key] == null) S.jitter[key] = (isHost() ? 0 : 1500) + Math.random() * (isHost() ? 500 : 2500);
+    if (now < dl.at + S.jitter[key]) return;
+    const last = S.timeoutSent[key] || 0;
+    if (Date.now() - last < 4000) return;
+    S.timeoutSent[key] = Date.now();
+    play(dl.k, {});
+  }
+  setInterval(tickTimeout, 400);
+
+  /* ---------- 事件 ---------- */
+  function toggleLim(arr, x, lim) {
+    const i = arr.indexOf(x);
+    if (i >= 0) arr.splice(i, 1); else if (arr.length < lim) arr.push(x);
+  }
+  function handle(act, el) {
+    const ds = el.dataset, s = g();
+    const st = s ? sel() : null;
+    switch (act) {
+      case 'create': createRoom(); return;
+      case 'join': S.joinCode = Core.normCode((document.getElementById('jc') || {}).value || S.joinCode); joinRoom(S.joinCode); return;
+      case 'sim': startSim(); return;
+      case 'home': closeRoom(''); return;
+      case 'copy': copyText(inviteText()); return;
+      case 'tab': S.tab = ds.v; render(); window.scrollTo(0, 0); return;
+      case 'leave':
+        if (S.room.phase === 'lobby' && !S.sim) send('leave', {});
+        closeRoom(''); return;
+      case 'move': send('move', { id: ds.id, dir: +ds.dir }); return;
+      case 'kick': send('kick', { id: ds.id }); return;
+      case 'addbot': {
+        const n = S.room.players.length; if (n >= 10) return;
+        const extra = ['小華', '阿強', '小玉', '老王', '阿美', '小新'];
+        S.tp.push({ k: 'join', p: 'p' + (n + 1), d: { name: extra[n % extra.length] + (n > 7 ? n : '') } }); return;
+      }
+      case 'game': return;
+      case 'preset': setCfg(function (c) { applyPreset(c, ds.v, S.room.players.length); }); return;
+      case 'tog': setCfg(function (c) { c.opt[ds.k] = !c.opt[ds.k]; if (!c.opt[ds.k]) delete c.opt[ds.k]; }); return;
+      case 'togcfg': setCfg(function (c) { c[ds.k] = !c[ds.k]; }); return;
+      case 'start': send('start', {}); S.tab = 'game'; return;
+      case 'again': send('reset', {}); return;
+      case 'pickp': {
+        if (!s) return;
+        if (s.phase === 'team') {
+          toggleLim(st.team, ds.id, AV.teamSize(s));
+          if (st.excal && st.team.indexOf(st.excal) < 0) st.excal = null;
+        } else if (s.phase === 'assassin') {
+          const need = st.mode === 'lovers' ? 2 : 1;
+          if (need === 1) st.targets = [ds.id]; else toggleLim(st.targets, ds.id, 2);
+        } else st.target = ds.id;
+        render(); return;
+      }
+      case 'excalto': st.excal = ds.id; render(); return;
+      case 'propose': {
+        const d = { team: st.team.slice() }; if (s.cfg.excal) d.excal = st.excal;
+        play('av.propose', d); return;
+      }
+      case 'vote': play('av.vote', { v: ds.v === '1' }); return;
+      case 'next': play('av.next', {}); return;
+      case 'card': play('av.card', { c: ds.c }); return;
+      case 'excalgo': play('av.excal', { target: st.target }); return;
+      case 'excalpass': play('av.excal', { target: null }); return;
+      case 'witch': play('av.witch', { hide: ds.v === '1' }); return;
+      case 'wchk': play('av.wcheck', { target: st.target }); return;
+      case 'wskip': play('av.wcheck', { target: null }); return;
+      case 'ladygo': play('av.lady', { target: st.target }); return;
+      case 'mode': st.mode = ds.v; st.targets = []; render(); return;
+      case 'kill': play('av.kill', { mode: st.mode, targets: st.targets.slice() }); return;
+      case 'role': st.role = ds.v; render(); return;
+      case 'kill2': play('av.kill2', { role: st.role, target: st.target }); return;
+      default: return;
+    }
+  }
+
+  document.addEventListener('click', function (e) {
+    const el = e.target.closest ? e.target.closest('[data-act]') : null;
+    if (!el || el.disabled) return;
+    handle(el.getAttribute('data-act'), el);
+  });
+  document.addEventListener('change', function (e) {
+    const el = e.target;
+    if (el && el.getAttribute && el.getAttribute('data-act-change') === 'viewas') { S.viewAs = el.value; S.sel.ph = -1; render(); }
+  });
+  document.addEventListener('input', function (e) {
+    const el = e.target;
+    if (el.id === 'nm') S.name = el.value;
+    if (el.id === 'jc') { const v = Core.normCode(el.value); S.joinCode = v; if (el.value !== v) el.value = v; }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && e.target && e.target.id === 'jc') { S.joinCode = Core.normCode(e.target.value); joinRoom(S.joinCode); }
+    const hold = e.target && e.target.closest ? e.target.closest('[data-hold]') : null;
+    if (hold && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); hold.classList.toggle('on'); }
+  });
+  /* 按住顯示身分：按住時不重畫畫面，放開後才補畫 */
+  document.addEventListener('pointerdown', function (e) {
+    const hold = e.target.closest ? e.target.closest('[data-hold]') : null;
+    if (!hold) return;
+    S.holding = true; hold.classList.add('on');
+  });
+  function release() {
+    if (!S.holding) return;
+    S.holding = false;
+    document.querySelectorAll('[data-hold].on').forEach(function (el) { el.classList.remove('on'); });
+    if (S.dirty) render();
+  }
+  document.addEventListener('pointerup', release);
+  document.addEventListener('pointercancel', release);
+  window.addEventListener('blur', release);
+  document.addEventListener('contextmenu', function (e) { if (e.target.closest && e.target.closest('[data-hold]')) e.preventDefault(); });
+
+  /* ---------- 啟動 ---------- */
+  (function boot() {
+    render();
+    let sess = null; try { sess = JSON.parse(sget('table:sess') || 'null'); } catch (e) { sess = null; }
+    if (sess && sess.code && sess.id && ONLINE) {
+      S.name = sess.name || S.name;
+      joinRoom(sess.code, sess.id);
+    }
+  })();
+  window.__table = S; /* 方便除錯 */
+})();
+</script>
