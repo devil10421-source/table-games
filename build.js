@@ -18,7 +18,7 @@ fs.writeFileSync(path.join(dist, 'index.html'), full);
 
 const cfgStub = '/* 把 Firebase 給你的設定貼在下面（照教學做）。沒貼之前，網頁只能單機示範。 */\n' +
   'window.TABLE_CONFIG = {\n  firebase: {\n    apiKey: "",\n    authDomain: "",\n    databaseURL: "",\n    projectId: "",\n    appId: ""\n  }\n};\n';
-fs.writeFileSync(path.join(dist, 'config.js'), cfgStub);
+if (!fs.existsSync(path.join(dist, 'config.js'))) fs.writeFileSync(path.join(dist, 'config.js'), cfgStub);
 
 /* Claude 作品版：標題在最前面、沒有 doctype/html/head/body，只能示範 */
 const art = '<title>桌邊</title>\n<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n<style>\n' + css + '</style>\n' + body + scripts;
